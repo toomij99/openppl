@@ -1,0 +1,70 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Artem Flight//Post-Flight Training Plan//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+
+BEGIN:VEVENT
+UID:20251208T090000-FlightStudy-Day1@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251208T090000
+DTEND;TZID=America/New_York:20251208T092000
+SUMMARY:Flight Study – Day 1: Checklists + ABCD
+DESCRIPTION:Focus: Checklist discipline and ABCD flow.\n- Say “Checklist start / Checklist complete” for Preflight\, Run-up\, Before-Takeoff\, Pre-Maneuver\, Before-Landing.\n- Practice ABCD engine failure flow (Airspeed → Best Field → Checklist → Declare) to ≤10 seconds.\n- Review engine restart steps: Carb heat ON\, Fuel BOTH\, Mixture RICH\, Throttle 1/4\, Primer IN/LOCKED\, Mags BOTH.
+END:VEVENT
+
+BEGIN:VEVENT
+UID:20251209T090000-FlightStudy-Day2@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251209T090000
+DTEND;TZID=America/New_York:20251209T092000
+SUMMARY:Flight Study – Day 2: Radio Discipline
+DESCRIPTION:Focus: Radio workflow and no-talking departure.\n- Simulate ATIS → Ground → Tower → Departure calls.\n- Practice pre-loading the next frequency in STANDBY before flip-flop.\n- Drill: No talking from takeoff roll until Tower hands you to Departure.\n- Always reset ATIS volume after copying.
+END:VEVENT
+
+BEGIN:VEVENT
+UID:20251210T090000-FlightStudy-Day3@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251210T090000
+DTEND;TZID=America/New_York:20251210T092000
+SUMMARY:Flight Study – Day 3: Maneuver Setup
+DESCRIPTION:Focus: Pre-maneuver checklist and headings.\n- Pre-Maneuver Checklist: Fuel BOTH\, Mixture RICH\, Carb heat ON\, Landing light ON\, Clearing turns COMPLETE.\n- Practice bugging headings before steep turns\, slow flight\, and climbs/descents.\n- Visualize clearing turns and setup flow before each maneuver.
+END:VEVENT
+
+BEGIN:VEVENT
+UID:20251211T090000-FlightStudy-Day4@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251211T090000
+DTEND;TZID=America/New_York:20251211T092000
+SUMMARY:Flight Study – Day 4: Landings & Confidence
+DESCRIPTION:Focus: Landings\, power control\, and confidence.\n- Visualize full pattern: downwind → base → final → flare.\n- Practice looking far down the runway during flare.\n- Mentally rehearse smooth\, stable power changes on final.\n- Reminder: “The plane is in your hands” – commit to decisions and relax grip.
+END:VEVENT
+
+BEGIN:VEVENT
+UID:20251212T090000-FlightStudy-Day5@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251212T090000
+DTEND;TZID=America/New_York:20251212T092000
+SUMMARY:Flight Study – Day 5: Emergency Procedures
+DESCRIPTION:Focus: Engine failures and field choice.\n- Repeat ABCD flow and restart checklist.\n- Practice choosing a best field quickly and committing.\n- Imagine MAYDAY / 7700 calls and what you actually say.\n- Optional: Use map/Google Earth to practice picking fields around KFXE.
+END:VEVENT
+
+BEGIN:VEVENT
+UID:20251213T090000-FlightStudy-Day6@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251213T090000
+DTEND;TZID=America/New_York:20251213T092000
+SUMMARY:Flight Study – Day 6: Integrated Scenario
+DESCRIPTION:Focus: Full flight mental run.\n- Simulate: Preflight → Taxi → Run-up → Departure (no talking) → Maneuvers (with pre-maneuver checklist) → Engine-out ABCD → Return to field.\n- Include radio calls and frequency changes.\n- Visualize staying ahead of the airplane the whole time.
+END:VEVENT
+
+BEGIN:VEVENT
+UID:20251214T090000-FlightStudy-Day7@artem
+DTSTAMP:20251207T210000Z
+DTSTART;TZID=America/New_York:20251214T090000
+DTEND;TZID=America/New_York:20251214T092000
+SUMMARY:Flight Study – Day 7: Flashcards & Full Rehearsal
+DESCRIPTION:Focus: Consolidation.\n- 10 minutes reviewing checklists\, ABCD\, radio\, and landing flashcards.\n- Visualize entire flight from startup to shutdown using correct flows and procedures.\n- Note 1–2 weak spots to focus on in the next real lesson.
+END:VEVENT
+
+END:VCALENDAR

@@ -36,8 +36,11 @@ CSV_PATH="${1:-}"
 import csv, sys, subprocess, datetime
 
 csv_path, list_name, due_time = sys.argv[1], sys.argv[2], sys.argv[3]
-hh, mm = map(int, due_time.split(":"))
-seconds_from_midnight = hh*3600 + mm*60
+if due_time != "NA":
+  hh, mm = map(int, due_time.split(":"))
+  default_seconds = hh*3600 + mm*60
+else:
+  default_seconds = -1
 
 APPLESCRIPT = r"""
 on run argv
@@ -64,9 +67,10 @@ end run
 """
 
 def parse_date(s):
-  for fmt in ("%Y-%m-%d","%m/%d/%Y"):
+  for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d", "%m/%d/%Y"):
     try:
-      return datetime.datetime.strptime(s, fmt).date()
+      dt = datetime.datetime.strptime(s, fmt)
+      return dt if "%H:%M" in fmt else dt.date()
     except Exception:
       pass
   return None
@@ -86,13 +90,19 @@ with open(csv_path, newline='', encoding='utf-8') as f:
     if not dt:
       print(f"Skipping row with unrecognized date: {due_s}", file=sys.stderr)
       continue
+
+    if isinstance(dt, datetime.datetime):
+      seconds = dt.hour * 3600 + dt.minute * 60
+    else:
+      seconds = default_seconds
+
     args = [
       "osascript",
       "-e", APPLESCRIPT,
       "--",
       list_name,
-      str(seconds_from_midnight),
-      str(dt.year), str(dt.month), str(dt.day),
+      str(seconds),
+      str(dt.year if isinstance(dt, datetime.datetime) else dt.year), str(dt.month if isinstance(dt, datetime.datetime) else dt.month), str(dt.day if isinstance(dt, datetime.datetime) else dt.day),
       title,
       notes,
     ]
