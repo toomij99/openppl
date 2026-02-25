@@ -8,7 +8,7 @@
 
 **Core value:** Systematically prepare for PPL checkride by breaking down FAA Private Airplane ACS into daily actionable tasks with progress tracking and automated calendar/reminder integration.
 
-**Current focus:** Roadmap created - awaiting planning
+**Current focus:** Phase 1 context gathered - ready for planning
 
 ---
 
@@ -37,6 +37,26 @@
 ---
 
 ## Accumulated Context
+
+### Phase 1 Decisions (from discuss-phase)
+
+**Navigation:**
+- Arrow keys for movement, header+footer for view indication
+- Instant view switching, help overlay (? or F1)
+
+**Data Entry:**
+- Form fields, ISO dates (YYYY-MM-DD), formatted currency ($1,500)
+- Auto-save to storage
+
+**Dashboard:**
+- Progress bar + % with days until checkride
+- 7-day lookahead, today's tasks highlighted
+- 4 quick stats (completed, remaining, overdue, total)
+
+**Checklist:**
+- 4 FAA categories (Documents, Aircraft, Ground, Flight)
+- Pre-populated with FAA requirements
+- Space to toggle, per-category + overall %
 
 ### Decisions Made
 
@@ -67,7 +87,8 @@ Key research findings incorporated:
 **Prerequisites:**
 - ROADMAP.md ✓
 - STATE.md ✓
-- REQUIREMENTS.md traceability updated ✓
+- REQUIREMENTS.md ✓
+- Phase 1 CONTEXT.md ✓
 
 ---
 
