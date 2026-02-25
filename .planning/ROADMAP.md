@@ -62,9 +62,9 @@
 3. User can create Apple Reminders for study tasks via osascript integration
 
 **Plans:** 3 plans
-- 01-01-PLAN.md — Core TUI Foundation + Database Models
-- 01-02-PLAN.md — Study Planning + Progress Tracking
-- 01-03-PLAN.md — Dashboard + Checklist + Budget
+- [x] 02-01-PLAN.md — ICS Export Service + Compatibility Tests
+- [x] 02-02-PLAN.md — Apple Reminders Export Adapter
+- [ ] 02-03-PLAN.md — Study View Export Wiring + User Feedback
 
 ---
 
