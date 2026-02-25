@@ -8,10 +8,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | 01-foundation |
-| **Plan** | 03 |
+| **Phase** | 02-calendar-export |
+| **Plan** | 01 |
 | **Total Plans** | 3 |
-| **Status** | Complete |
+| **Status** | Ready |
 
 ---
 
