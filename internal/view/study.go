@@ -1,6 +1,7 @@
 package view
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -36,6 +37,16 @@ type icsExportDoneMsg struct {
 
 type remindersExportDoneMsg struct {
 	result services.RemindersExportResult
+	err    error
+}
+
+type googleSyncDoneMsg struct {
+	result services.GoogleCalendarSyncResult
+	err    error
+}
+
+type opencodeExportDoneMsg struct {
+	result services.OpenCodeBotExportResult
 	err    error
 }
 
@@ -97,6 +108,20 @@ func (sv *StudyView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			sv.statusMessage = fmt.Sprintf("Reminders export failed: %v", msg.err)
 		} else {
 			sv.statusMessage = fmt.Sprintf("Reminders export complete: %d created in '%s'", msg.result.Created, msg.result.ListName)
+		}
+		return sv, nil
+	case googleSyncDoneMsg:
+		if msg.err != nil {
+			sv.statusMessage = fmt.Sprintf("Google sync failed: %v", msg.err)
+		} else {
+			sv.statusMessage = fmt.Sprintf("Google sync complete: %d created, %d failed (%s)", msg.result.Created, msg.result.Failed, msg.result.CalendarID)
+		}
+		return sv, nil
+	case opencodeExportDoneMsg:
+		if msg.err != nil {
+			sv.statusMessage = fmt.Sprintf("OpenCode export failed: %v", msg.err)
+		} else {
+			sv.statusMessage = fmt.Sprintf("OpenCode export complete: %d tasks -> %s", msg.result.TaskCount, msg.result.Path)
 		}
 		return sv, nil
 	case tea.KeyMsg:
@@ -178,6 +203,10 @@ func (sv *StudyView) handleNav(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return sv, sv.exportICS()
 	case "r":
 		return sv, sv.exportReminders()
+	case "g":
+		return sv, sv.syncGoogleCalendar()
+	case "o":
+		return sv, sv.exportOpenCodeBot()
 	}
 	return sv, nil
 }
@@ -205,6 +234,32 @@ func (sv *StudyView) exportReminders() tea.Cmd {
 	return func() tea.Msg {
 		result, err := services.ExportAppleReminders(tasks, services.RemindersExportOptions{})
 		return remindersExportDoneMsg{result: result, err: err}
+	}
+}
+
+func (sv *StudyView) syncGoogleCalendar() tea.Cmd {
+	if len(sv.tasks) == 0 {
+		sv.statusMessage = "Google sync skipped: no tasks to sync"
+		return nil
+	}
+
+	tasks := append([]model.DailyTask(nil), sv.tasks...)
+	return func() tea.Msg {
+		result, err := services.SyncTasksToGoogleCalendar(context.Background(), tasks, services.GoogleCalendarSyncOptions{})
+		return googleSyncDoneMsg{result: result, err: err}
+	}
+}
+
+func (sv *StudyView) exportOpenCodeBot() tea.Cmd {
+	if len(sv.tasks) == 0 {
+		sv.statusMessage = "OpenCode export skipped: no tasks to export"
+		return nil
+	}
+
+	tasks := append([]model.DailyTask(nil), sv.tasks...)
+	return func() tea.Msg {
+		result, err := services.ExportOpenCodeBotTasks(tasks, services.OpenCodeBotExportOptions{OutputDir: "exports/opencode-bot"})
+		return opencodeExportDoneMsg{result: result, err: err}
 	}
 }
 
@@ -312,7 +367,7 @@ func (sv *StudyView) View() string {
 	}
 
 	// Help
-	b.WriteString(styles.Dim.Render("\n[↑↓] Navigate  [Enter] Toggle  [/] Date  [Tab/1-5] Filter  [e] Export ICS  [r] Reminders"))
+	b.WriteString(styles.Dim.Render("\n[↑↓] Navigate  [Enter] Toggle  [/] Date  [Tab/1-5] Filter  [e] Export ICS  [r] Reminders  [g] Google Sync  [o] OpenCode"))
 
 	if sv.statusMessage != "" {
 		b.WriteString("\n")
