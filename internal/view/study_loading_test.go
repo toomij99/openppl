@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
+
 	"ppl-study-planner/internal/model"
 	"ppl-study-planner/internal/services"
 )
@@ -70,5 +72,37 @@ func TestStudyLoadingIndicatorRendering(t *testing.T) {
 	}
 	if !strings.Contains(renderedDone, "Reminders export failed") {
 		t.Fatalf("expected completion status after loading, got %q", renderedDone)
+	}
+}
+
+func TestStudyDuplicateOperationSuppression(t *testing.T) {
+	sv := &StudyView{
+		tasks: []model.DailyTask{{ID: 1, Category: "Theory", Title: "Review regulations"}},
+	}
+
+	firstCmd := sv.exportICS()
+	if firstCmd == nil {
+		t.Fatal("expected first command to start operation")
+	}
+
+	for _, key := range []string{"e", "r", "g", "o"} {
+		_, cmd := sv.handleNav(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(key)})
+		if cmd != nil {
+			t.Fatalf("expected duplicate key %q to be suppressed", key)
+		}
+		if sv.status.severity != studyStatusSeverityWarning {
+			t.Fatalf("expected warning status for duplicate key %q, got %q", key, sv.status.severity)
+		}
+		if !strings.Contains(sv.status.message, "already in progress") {
+			t.Fatalf("expected duplicate warning for key %q, got %q", key, sv.status.message)
+		}
+	}
+
+	_, _ = sv.Update(icsExportDoneMsg{result: services.ICSExportResult{Path: "exports/ppl.ics", EventCount: 1}})
+	if sv.operation.loading {
+		t.Fatal("expected loading to clear after completion")
+	}
+	if sv.operation.label != "" {
+		t.Fatalf("expected operation label to reset, got %q", sv.operation.label)
 	}
 }
