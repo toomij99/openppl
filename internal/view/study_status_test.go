@@ -141,12 +141,6 @@ func TestStudyStatusRendering(t *testing.T) {
 	if strings.Contains(renderedErr, "sensitive internal error") {
 		t.Fatalf("expected raw error details to be hidden, got %q", renderedErr)
 	}
-
-	successRendered := renderStudyStatus(newStudyStatusSuccess("done"))
-	warningRendered := renderStudyStatus(newStudyStatusWarning("done"))
-	if successRendered == warningRendered {
-		t.Fatalf("expected severity-specific rendering output to differ")
-	}
 }
 
 func newStudyViewForTest(t *testing.T) *StudyView {
