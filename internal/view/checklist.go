@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"gorm.io/gorm"
 
 	"ppl-study-planner/internal/model"
 	"ppl-study-planner/internal/styles"
@@ -38,7 +39,9 @@ func NewChecklistView(db interface{}) *ChecklistView {
 // Init loads the checklist items from database
 func (v *ChecklistView) Init() tea.Cmd {
 	// Load items from database
-	// This would be: v.db.Find(&v.items)
+	if gormDb, ok := v.db.(*gorm.DB); ok {
+		gormDb.Find(&v.items)
+	}
 	return nil
 }
 
