@@ -27,7 +27,7 @@ type StudyView struct {
 	inputMode     bool
 	dateInput     string
 	category      string
-	statusMessage string
+	status        studyStatus
 }
 
 type icsExportDoneMsg struct {
@@ -98,30 +98,34 @@ func (sv *StudyView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case icsExportDoneMsg:
 		if msg.err != nil {
-			sv.statusMessage = fmt.Sprintf("ICS export failed: %v", msg.err)
+			sv.status = newStudyStatusFromError("ICS export", msg.err)
 		} else {
-			sv.statusMessage = fmt.Sprintf("ICS export complete: %s (%d events)", msg.result.Path, msg.result.EventCount)
+			sv.status = newStudyStatusSuccess(fmt.Sprintf("ICS export complete: %s (%d events)", msg.result.Path, msg.result.EventCount))
 		}
 		return sv, nil
 	case remindersExportDoneMsg:
 		if msg.err != nil {
-			sv.statusMessage = fmt.Sprintf("Reminders export failed: %v", msg.err)
+			sv.status = newStudyStatusFromError("Reminders export", msg.err)
 		} else {
-			sv.statusMessage = fmt.Sprintf("Reminders export complete: %d created in '%s'", msg.result.Created, msg.result.ListName)
+			sv.status = newStudyStatusSuccess(fmt.Sprintf("Reminders export complete: %d created in '%s'", msg.result.Created, msg.result.ListName))
 		}
 		return sv, nil
 	case googleSyncDoneMsg:
 		if msg.err != nil {
-			sv.statusMessage = fmt.Sprintf("Google sync failed: %v", msg.err)
+			sv.status = newStudyStatusFromError("Google sync", msg.err)
 		} else {
-			sv.statusMessage = fmt.Sprintf("Google sync complete: %d created, %d failed (%s)", msg.result.Created, msg.result.Failed, msg.result.CalendarID)
+			if msg.result.Failed > 0 {
+				sv.status = newStudyStatusWarning(fmt.Sprintf("Google sync completed with issues: %d created, %d failed (%s)", msg.result.Created, msg.result.Failed, msg.result.CalendarID))
+			} else {
+				sv.status = newStudyStatusSuccess(fmt.Sprintf("Google sync complete: %d created (%s)", msg.result.Created, msg.result.CalendarID))
+			}
 		}
 		return sv, nil
 	case opencodeExportDoneMsg:
 		if msg.err != nil {
-			sv.statusMessage = fmt.Sprintf("OpenCode export failed: %v", msg.err)
+			sv.status = newStudyStatusFromError("OpenCode export", msg.err)
 		} else {
-			sv.statusMessage = fmt.Sprintf("OpenCode export complete: %d tasks -> %s", msg.result.TaskCount, msg.result.Path)
+			sv.status = newStudyStatusSuccess(fmt.Sprintf("OpenCode export complete: %d tasks -> %s", msg.result.TaskCount, msg.result.Path))
 		}
 		return sv, nil
 	case tea.KeyMsg:
@@ -145,13 +149,22 @@ func (sv *StudyView) handleInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			if d, err := time.Parse(layout, sv.dateInput); err == nil {
 				sv.saveStudyPlan(d)
+				sv.status = newStudyStatusSuccess("Checkride date saved.")
+				sv.inputMode = false
+				sv.dateInput = ""
+				return sv, nil
 			}
+
+			sv.status = newStudyStatusWarning("Invalid date. Use MM/DD/YYYY and try again.")
+			return sv, nil
 		}
-		sv.inputMode = false
-		sv.dateInput = ""
+
+		sv.status = newStudyStatusWarning("Enter a full date using MM/DD/YYYY.")
+		return sv, nil
 	case "esc":
 		sv.inputMode = false
 		sv.dateInput = ""
+		sv.status = studyStatus{}
 	case "backspace":
 		if len(sv.dateInput) > 0 {
 			sv.dateInput = sv.dateInput[:len(sv.dateInput)-1]
@@ -213,7 +226,7 @@ func (sv *StudyView) handleNav(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (sv *StudyView) exportICS() tea.Cmd {
 	if len(sv.tasks) == 0 {
-		sv.statusMessage = "ICS export skipped: no tasks to export"
+		sv.status = newStudyStatusWarning("ICS export skipped: no tasks available to export.")
 		return nil
 	}
 
@@ -226,7 +239,7 @@ func (sv *StudyView) exportICS() tea.Cmd {
 
 func (sv *StudyView) exportReminders() tea.Cmd {
 	if len(sv.tasks) == 0 {
-		sv.statusMessage = "Reminders export skipped: no tasks to export"
+		sv.status = newStudyStatusWarning("Reminders export skipped: no tasks available to export.")
 		return nil
 	}
 
@@ -239,7 +252,7 @@ func (sv *StudyView) exportReminders() tea.Cmd {
 
 func (sv *StudyView) syncGoogleCalendar() tea.Cmd {
 	if len(sv.tasks) == 0 {
-		sv.statusMessage = "Google sync skipped: no tasks to sync"
+		sv.status = newStudyStatusWarning("Google sync skipped: no tasks available to sync.")
 		return nil
 	}
 
@@ -252,7 +265,7 @@ func (sv *StudyView) syncGoogleCalendar() tea.Cmd {
 
 func (sv *StudyView) exportOpenCodeBot() tea.Cmd {
 	if len(sv.tasks) == 0 {
-		sv.statusMessage = "OpenCode export skipped: no tasks to export"
+		sv.status = newStudyStatusWarning("OpenCode export skipped: no tasks available to export.")
 		return nil
 	}
 
@@ -322,12 +335,12 @@ func (sv *StudyView) View() string {
 	b.WriteString("\n\n")
 
 	// Date display
-	if sv.hasCheckride {
-		b.WriteString(fmt.Sprintf("Checkride: %s ", sv.checkrideDate.Format("01/02/2006")))
-		b.WriteString(styles.Dim.Render("(press / to change)"))
-	} else if sv.inputMode {
+	if sv.inputMode {
 		b.WriteString("Enter date (MM/DD/YYYY): ")
 		b.WriteString(styles.HighlightBox.Width(12).Render(sv.dateInput + "_"))
+	} else if sv.hasCheckride {
+		b.WriteString(fmt.Sprintf("Checkride: %s ", sv.checkrideDate.Format("01/02/2006")))
+		b.WriteString(styles.Dim.Render("(press / to change)"))
 	} else {
 		b.WriteString("[Not set] ")
 		b.WriteString(styles.Dim.Render("Press / to set checkride date"))
@@ -369,12 +382,29 @@ func (sv *StudyView) View() string {
 	// Help
 	b.WriteString(styles.Dim.Render("\n[↑↓] Navigate  [Enter] Toggle  [/] Date  [Tab/1-5] Filter  [e] Export ICS  [r] Reminders  [g] Google Sync  [o] OpenCode"))
 
-	if sv.statusMessage != "" {
+	if sv.status.message != "" {
 		b.WriteString("\n")
-		b.WriteString(styles.Subtitle.Render(sv.statusMessage))
+		b.WriteString(renderStudyStatus(sv.status))
 	}
 
 	return b.String()
+}
+
+func renderStudyStatus(status studyStatus) string {
+	if status.message == "" {
+		return ""
+	}
+
+	switch status.severity {
+	case studyStatusSeveritySuccess:
+		return styles.Success.Render(status.message)
+	case studyStatusSeverityWarning:
+		return styles.WarningStyle.Render(status.message)
+	case studyStatusSeverityError:
+		return styles.ErrorStyle.Render(status.message)
+	default:
+		return styles.Dim.Render(status.message)
+	}
 }
 
 // findIndex finds task index in filtered list
