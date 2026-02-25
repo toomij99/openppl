@@ -9,10 +9,10 @@
 | Field | Value |
 |-------|-------|
 | **Phase** | 04-polish |
-| **Plan** | 02 |
+| **Plan** | 03 |
 | **Total Plans** | 3 |
-| **Status** | In Progress |
-| **Last Completed** | 04-polish-01 (Error handling + validation UX hardening) |
+| **Status** | Complete |
+| **Last Completed** | 04-polish-02 (Loading indicators + async operation lifecycle UX) |
 
 ---
 
@@ -63,6 +63,8 @@
 - [Phase 04-polish]: Treat invalid or incomplete date input as warning state and keep input mode active until corrected
 - [Phase 04-polish]: Centralized keyboard shortcuts in internal/tui/shortcuts.go now power both footer hints and help overlay sections.
 - [Phase 04-polish]: MainModel handles ?/F1 globally with modal help visibility so discoverability works consistently across screens.
+- [Phase 04-polish]: Use explicit Study operation state (label + loading flag) while keeping severity/message in shared studyStatus.
+- [Phase 04-polish]: Block e/r/g/o while async operation is active and show warning status instead of launching duplicate commands.
 
 ### Research Context
 
@@ -82,9 +84,9 @@ Key research findings incorporated:
 
 ## Session Continuity
 
-**Last session:** 2026-02-25T15:16:16.229Z
+**Last session:** 2026-02-25T20:41:06.045Z
 
-**Next action:** Execute 04-polish-02 (loading indicators + async operation lifecycle UX)
+**Next action:** Transition to Phase 5 planning/execution
 
 ---
 
@@ -109,6 +111,7 @@ Key research findings incorporated:
 | 03-google-integration | 02 | 8min | 2 | 3 |
 | 03-google-integration | 03 | 6min | 2 | 3 |
 | 04-polish | 01 | 3 min | 3 | 3 |
+| 04-polish | 02 | 1 min | 3 | 2 |
 
 ---
 
