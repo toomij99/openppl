@@ -33,6 +33,9 @@ type MainModel struct {
 	height        int
 	studyView     *view.StudyView
 	progressView  *view.ProgressView
+	dashboardView *view.DashboardView
+	checklistView *view.ChecklistView
+	budgetView    *view.BudgetView
 }
 
 // New creates a new TUI model
@@ -49,6 +52,9 @@ func New() (*MainModel, error) {
 		height:        24,
 		studyView:     view.NewStudyView(database),
 		progressView:  view.NewProgressView(database),
+		dashboardView: view.NewDashboardView(database),
+		checklistView: view.NewChecklistView(database),
+		budgetView:    view.NewBudgetView(database),
 	}, nil
 }
 
@@ -102,6 +108,13 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentScreen = ScreenChecklist
 		}
 
+		// Route messages to dashboard view when on dashboard screen
+		if m.currentScreen == ScreenDashboard && m.dashboardView != nil {
+			updated, cmd := m.dashboardView.Update(msg)
+			m.dashboardView = updated.(*view.DashboardView)
+			return m, cmd
+		}
+
 		// Route messages to study view when on study plan screen
 		if m.currentScreen == ScreenStudyPlan && m.studyView != nil {
 			updated, cmd := m.studyView.Update(msg)
@@ -113,6 +126,20 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.currentScreen == ScreenProgress && m.progressView != nil {
 			updated, _ := m.progressView.Update(msg)
 			m.progressView = updated.(*view.ProgressView)
+		}
+
+		// Route messages to budget view when on budget screen
+		if m.currentScreen == ScreenBudget && m.budgetView != nil {
+			updated, cmd := m.budgetView.Update(msg)
+			m.budgetView = updated.(*view.BudgetView)
+			return m, cmd
+		}
+
+		// Route messages to checklist view when on checklist screen
+		if m.currentScreen == ScreenChecklist && m.checklistView != nil {
+			updated, cmd := m.checklistView.Update(msg)
+			m.checklistView = updated.(*view.ChecklistView)
+			return m, cmd
 		}
 
 	case tea.WindowSizeMsg:
@@ -127,7 +154,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m MainModel) View() string {
 	header := renderHeader(m.currentScreen)
 	footer := renderFooter()
-	content := renderContent(m.currentScreen, m.width, m.height, m.studyView, m.progressView)
+	content := renderContent(m.currentScreen, m.width, m.height, m.dashboardView, m.studyView, m.progressView, m.budgetView, m.checklistView)
 
 	return header + "\n" + content + "\n" + footer
 }
@@ -145,12 +172,15 @@ func renderFooter() string {
 	)
 }
 
-func renderContent(screen Screen, width, height int, studyView *view.StudyView, progressView *view.ProgressView) string {
+func renderContent(screen Screen, width, height int, dashboardView *view.DashboardView, studyView *view.StudyView, progressView *view.ProgressView, budgetView *view.BudgetView, checklistView *view.ChecklistView) string {
 	contentWidth := width - 4
 	contentHeight := height - 4
 
 	switch screen {
 	case ScreenDashboard:
+		if dashboardView != nil {
+			return dashboardView.View()
+		}
 		return renderDashboard(contentWidth, contentHeight)
 	case ScreenStudyPlan:
 		if studyView != nil {
@@ -163,8 +193,14 @@ func renderContent(screen Screen, width, height int, studyView *view.StudyView, 
 		}
 		return renderProgress(contentWidth, contentHeight)
 	case ScreenBudget:
+		if budgetView != nil {
+			return budgetView.View()
+		}
 		return renderBudget(contentWidth, contentHeight)
 	case ScreenChecklist:
+		if checklistView != nil {
+			return checklistView.View()
+		}
 		return renderChecklist(contentWidth, contentHeight)
 	default:
 		return ""
