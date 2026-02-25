@@ -111,8 +111,6 @@ func getTaskTitle(category, area string) string {
 
 // getTaskDescription returns a detailed description for the task
 func getTaskDescription(category, area string, dayIndex int) string {
-	week := dayIndex/7 + 1
-
 	switch category {
 	case "Theory":
 		return "Review " + area + " concepts. Complete knowledge prep questions. Focus on FAA test prep."
@@ -128,8 +126,8 @@ func getTaskDescription(category, area string, dayIndex int) string {
 }
 
 // DistributeTasksByCategory groups tasks by their category
-func DistributeTasksByCategory(tasks []DailyTask) map[string][]DailyTask {
-	distribution := make(map[string][]DailyTask)
+func DistributeTasksByCategory(tasks []model.DailyTask) map[string][]model.DailyTask {
+	distribution := make(map[string][]model.DailyTask)
 
 	for _, task := range tasks {
 		distribution[task.Category] = append(distribution[task.Category], task)

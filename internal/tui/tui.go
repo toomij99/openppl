@@ -9,6 +9,7 @@ import (
 	"ppl-study-planner/internal/db"
 	"ppl-study-planner/internal/model"
 	"ppl-study-planner/internal/styles"
+	"ppl-study-planner/internal/view"
 
 	"gorm.io/gorm"
 )
@@ -30,6 +31,8 @@ type MainModel struct {
 	currentScreen Screen
 	width         int
 	height        int
+	studyView     *view.StudyView
+	progressView  *view.ProgressView
 }
 
 // New creates a new TUI model
@@ -44,6 +47,8 @@ func New() (*MainModel, error) {
 		currentScreen: ScreenDashboard,
 		width:         80,
 		height:        24,
+		studyView:     view.NewStudyView(database),
+		progressView:  view.NewProgressView(database),
 	}, nil
 }
 
@@ -97,6 +102,19 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentScreen = ScreenChecklist
 		}
 
+		// Route messages to study view when on study plan screen
+		if m.currentScreen == ScreenStudyPlan && m.studyView != nil {
+			updated, cmd := m.studyView.Update(msg)
+			m.studyView = updated.(*view.StudyView)
+			return m, cmd
+		}
+
+		// Route messages to progress view when on progress screen
+		if m.currentScreen == ScreenProgress && m.progressView != nil {
+			updated, _ := m.progressView.Update(msg)
+			m.progressView = updated.(*view.ProgressView)
+		}
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -109,7 +127,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m MainModel) View() string {
 	header := renderHeader(m.currentScreen)
 	footer := renderFooter()
-	content := renderContent(m.currentScreen, m.width, m.height)
+	content := renderContent(m.currentScreen, m.width, m.height, m.studyView, m.progressView)
 
 	return header + "\n" + content + "\n" + footer
 }
@@ -127,7 +145,7 @@ func renderFooter() string {
 	)
 }
 
-func renderContent(screen Screen, width, height int) string {
+func renderContent(screen Screen, width, height int, studyView *view.StudyView, progressView *view.ProgressView) string {
 	contentWidth := width - 4
 	contentHeight := height - 4
 
@@ -135,8 +153,14 @@ func renderContent(screen Screen, width, height int) string {
 	case ScreenDashboard:
 		return renderDashboard(contentWidth, contentHeight)
 	case ScreenStudyPlan:
+		if studyView != nil {
+			return studyView.View()
+		}
 		return renderStudyPlan(contentWidth, contentHeight)
 	case ScreenProgress:
+		if progressView != nil {
+			return progressView.View()
+		}
 		return renderProgress(contentWidth, contentHeight)
 	case ScreenBudget:
 		return renderBudget(contentWidth, contentHeight)

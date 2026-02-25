@@ -82,3 +82,15 @@ var ScreenTitle = [5]string{
 	"Budget",
 	"Checklist",
 }
+
+// Category colors for study tasks
+var (
+	CategoryTheory      = lipgloss.NewStyle().Foreground(lipgloss.Color("99"))
+	CategoryChairFlying = lipgloss.NewStyle().Foreground(lipgloss.Color("141"))
+	CategoryGarmin      = lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
+	CategoryCFI         = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	SelectedTask        = lipgloss.NewStyle().Background(lipgloss.Color("57")).Foreground(lipgloss.Color("255"))
+	SelectedFilter      = lipgloss.NewStyle().Background(lipgloss.Color("57")).Foreground(lipgloss.Color("255"))
+	ProgressBar         = lipgloss.NewStyle().Foreground(Accent)
+	ProgressBarEmpty    = lipgloss.NewStyle().Foreground(Secondary)
+)

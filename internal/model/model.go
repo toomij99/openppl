@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // StudyPlan represents a PPL study plan with a target checkride date
@@ -68,4 +70,9 @@ type Budget struct {
 	ItemType  BudgetItemType `gorm:"item_type" json:"item_type"`
 	Amount    float64        `gorm:"amount" json:"amount"`
 	CreatedAt time.Time      `json:"created_at"`
+}
+
+// DB wraps gorm.DB for convenience
+type DB struct {
+	*gorm.DB
 }
