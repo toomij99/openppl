@@ -9,10 +9,10 @@
 | Field | Value |
 |-------|-------|
 | **Phase** | 04-polish |
-| **Plan** | 01 |
+| **Plan** | 02 |
 | **Total Plans** | 3 |
-| **Status** | Ready |
-| **Last Completed** | 03-google-integration-03 (OpenCode bot exporter + Study view Google wiring) |
+| **Status** | In Progress |
+| **Last Completed** | 04-polish-03 (global help overlay + centralized shortcut registry) |
 
 ---
 
@@ -59,6 +59,10 @@
 - [Phase 03-google-integration]: Implemented terminal auth-code flow (browser URL + pasted code) for Google Calendar-compatible terminal OAuth.
 - [Phase 03-google-integration]: Persist Google OAuth tokens at data/google/token.json with strict 0600 file permissions and typed auth errors.
 - [Phase 03-google-integration]: Standardized exporter artifact paths through ResolveArtifactOutputDir so outputs remain under repo icss/.
+- [Phase 04-polish]: Translate service-layer typed errors at the Study view boundary to avoid leaking raw internal errors
+- [Phase 04-polish]: Treat invalid or incomplete date input as warning state and keep input mode active until corrected
+- [Phase 04-polish]: Centralized keyboard shortcuts in internal/tui/shortcuts.go now power both footer hints and help overlay sections.
+- [Phase 04-polish]: MainModel handles ?/F1 globally with modal help visibility so discoverability works consistently across screens.
 
 ### Research Context
 
@@ -78,9 +82,9 @@ Key research findings incorporated:
 
 ## Session Continuity
 
-**Last session:** 2026-02-25T14:33:29Z
+**Last session:** 2026-02-25T15:16:16.229Z
 
-**Next action:** Plan and execute 04-polish-01 (UI refinements and edge-case handling)
+**Next action:** Execute 04-polish-02 (loading indicators + async operation lifecycle UX)
 
 ---
 
@@ -111,3 +115,5 @@ Key research findings incorporated:
 | Phase 01-foundation Complete | 246min | 15 tasks | 23 files |
 | Phase 03-google-integration P01 | 1 min | 3 tasks | 9 files |
 | Phase 03-google-integration Complete | 35min | 7 tasks | 16 files |
+| Phase 04-polish P01 | 3 min | 3 tasks | 3 files |
+| Phase 04-polish P03 | 4 min | 3 tasks | 3 files |

@@ -104,9 +104,9 @@
 3. Keyboard shortcuts documented and accessible via help command
 
 **Plans:** 3 plans
-- 01-01-PLAN.md — Core TUI Foundation + Database Models
-- 01-02-PLAN.md — Study Planning + Progress Tracking
-- 01-03-PLAN.md — Dashboard + Checklist + Budget
+- [x] 04-01-PLAN.md — Error handling + validation UX hardening
+- [ ] 04-02-PLAN.md — Loading indicators + async operation lifecycle UX
+- [ ] 04-03-PLAN.md — Global help command + centralized shortcut documentation
 
 ---
 
@@ -139,7 +139,7 @@
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Calendar Export | 3/3 | Complete | 2026-02-25 |
 | 3. Google Integration | 3/3 | Complete | 2026-02-25 |
-| 4. Polish | 0/3 | Not started | - |
+| 4. Polish | 2/3 | In Progress | - |
 | 5. Multi-Rating Planners | 0/4 | Not started | - |
 
 ---
