@@ -12,7 +12,7 @@
 | **Plan** | 02 |
 | **Total Plans** | 3 |
 | **Status** | In Progress |
-| **Last Completed** | 04-polish-03 (global help overlay + centralized shortcut registry) |
+| **Last Completed** | 04-polish-01 (Error handling + validation UX hardening) |
 
 ---
 
@@ -108,12 +108,8 @@ Key research findings incorporated:
 | 01-foundation | 05 | 1min | 3 | 3 |
 | 03-google-integration | 02 | 8min | 2 | 3 |
 | 03-google-integration | 03 | 6min | 2 | 3 |
+| 04-polish | 01 | 3 min | 3 | 3 |
 
 ---
 
 *State managed by GSD roadmapper*
-| Phase 01-foundation Complete | 246min | 15 tasks | 23 files |
-| Phase 03-google-integration P01 | 1 min | 3 tasks | 9 files |
-| Phase 03-google-integration Complete | 35min | 7 tasks | 16 files |
-| Phase 04-polish P01 | 3 min | 3 tasks | 3 files |
-| Phase 04-polish P03 | 4 min | 3 tasks | 3 files |
