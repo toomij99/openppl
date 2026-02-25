@@ -59,10 +59,8 @@ func (v *DashboardView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the dashboard
 func (v *DashboardView) View() string {
 	// Query stats from database if we have a DB connection
-	if db, ok := v.db.(interface {
-		Find(interface{}) *interface{}
-	}); ok {
-		v.refreshStats(db)
+	if gormDb, ok := v.db.(*gorm.DB); ok {
+		v.refreshStats(gormDb)
 	}
 
 	contentWidth := v.width - 4
