@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -29,6 +30,7 @@ const (
 type MainModel struct {
 	db            *gorm.DB
 	currentScreen Screen
+	helpVisible   bool
 	width         int
 	height        int
 	studyView     *view.StudyView
@@ -93,6 +95,21 @@ func (m MainModel) Init() tea.Cmd {
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if msg.String() == "?" || msg.String() == "f1" {
+			m.helpVisible = !m.helpVisible
+			return m, nil
+		}
+
+		if m.helpVisible {
+			if msg.String() == "esc" {
+				m.helpVisible = false
+				return m, nil
+			}
+			if msg.String() != "ctrl+c" && msg.String() != "q" {
+				return m, nil
+			}
+		}
+
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -155,6 +172,9 @@ func (m MainModel) View() string {
 	header := renderHeader(m.currentScreen)
 	footer := renderFooter()
 	content := renderContent(m.currentScreen, m.width, m.height, m.dashboardView, m.studyView, m.progressView, m.budgetView, m.checklistView)
+	if m.helpVisible {
+		content = renderHelpOverlay(m.currentScreen)
+	}
 
 	return header + "\n" + content + "\n" + footer
 }
@@ -167,9 +187,33 @@ func renderHeader(screen Screen) string {
 }
 
 func renderFooter() string {
+	parts := make([]string, 0, len(FooterShortcuts()))
+	for _, shortcut := range FooterShortcuts() {
+		parts = append(parts, fmt.Sprintf("[%s] %s", shortcut.Keys, shortcut.Action))
+	}
+
 	return styles.Footer.Width(80).Render(
-		" [1] Dashboard | [2] Study Plan | [3] Progress | [4] Budget | [5] Checklist | [q] Quit ",
+		" " + strings.Join(parts, " | ") + " ",
 	)
+}
+
+func renderHelpOverlay(screen Screen) string {
+	sections := HelpSections(screen)
+	var b strings.Builder
+	b.WriteString(styles.Title.Render("Keyboard Shortcuts"))
+	b.WriteString("\n\n")
+
+	for _, section := range sections {
+		b.WriteString(styles.Subtitle.Render(section.Title))
+		b.WriteString("\n")
+		for _, shortcut := range section.Shortcuts {
+			b.WriteString(fmt.Sprintf("  %-14s %s\n", shortcut.Keys, shortcut.Action))
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString(styles.Dim.Render("Press ? or F1 to close help"))
+	return styles.HighlightBox.Width(76).Render(b.String())
 }
 
 func renderContent(screen Screen, width, height int, dashboardView *view.DashboardView, studyView *view.StudyView, progressView *view.ProgressView, budgetView *view.BudgetView, checklistView *view.ChecklistView) string {
