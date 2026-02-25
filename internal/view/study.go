@@ -312,7 +312,12 @@ func (sv *StudyView) View() string {
 	}
 
 	// Help
-	b.WriteString(styles.Dim.Render("\n[↑↓] Navigate  [Enter] Toggle  [/] Date  [Tab/1-5] Filter"))
+	b.WriteString(styles.Dim.Render("\n[↑↓] Navigate  [Enter] Toggle  [/] Date  [Tab/1-5] Filter  [e] Export ICS  [r] Reminders"))
+
+	if sv.statusMessage != "" {
+		b.WriteString("\n")
+		b.WriteString(styles.Subtitle.Render(sv.statusMessage))
+	}
 
 	return b.String()
 }
