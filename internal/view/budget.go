@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"gorm.io/gorm"
 
 	"ppl-study-planner/internal/model"
 	"ppl-study-planner/internal/styles"
@@ -63,7 +64,7 @@ var budgetFields = []BudgetField{
 
 // NewBudgetView creates a new budget view
 func NewBudgetView(db interface{}) *BudgetView {
-	return &BudgetView{
+	v := &BudgetView{
 		PlaneRate:      150,   // Default: $150/hr
 		CfiRate:        60,    // Default: $60/hr
 		DualGivenHours: 40,    // Default: 40 hours
@@ -80,6 +81,9 @@ func NewBudgetView(db interface{}) *BudgetView {
 		height:         24,
 		db:             db,
 	}
+	// Load existing budget from database
+	v.loadBudget()
+	return v
 }
 
 // Init implements tea.Model
@@ -344,6 +348,9 @@ func (v *BudgetView) adjustValue(delta int) {
 		step = 500
 		v.BudgetLimit = adjustFloat(v.BudgetLimit, delta, step, 1000, 100000)
 	}
+
+	// Persist changes to database
+	v.saveBudget()
 }
 
 func adjustFloat(current float64, delta int, step float64, min float64, max float64) float64 {
@@ -356,6 +363,58 @@ func adjustFloat(current float64, delta int, step float64, min float64, max floa
 	}
 	// Round to 2 decimal places
 	return float64(int64(newVal*100)) / 100
+}
+
+// loadBudget loads budget values from database
+func (v *BudgetView) loadBudget() {
+	gormDb, ok := v.db.(*gorm.DB)
+	if !ok {
+		return
+	}
+
+	// Load all budget items from database
+	var budgets []model.Budget
+	gormDb.Find(&budgets)
+
+	for _, b := range budgets {
+		switch b.ItemType {
+		case model.BudgetPlaneRate:
+			v.PlaneRate = b.Amount
+		case model.BudgetCfiRate:
+			v.CfiRate = b.Amount
+		case model.BudgetLiving:
+			// For living costs, we'll need more fields in the model
+			// For now, store the total
+			v.TravelCost = b.Amount
+		}
+	}
+}
+
+// saveBudget persists budget values to database
+func (v *BudgetView) saveBudget() {
+	gormDb, ok := v.db.(*gorm.DB)
+	if !ok {
+		return
+	}
+
+	// Save plane rate
+	gormDb.Save(&model.Budget{
+		ItemType: model.BudgetPlaneRate,
+		Amount:   v.PlaneRate,
+	})
+
+	// Save CFI rate
+	gormDb.Save(&model.Budget{
+		ItemType: model.BudgetCfiRate,
+		Amount:   v.CfiRate,
+	})
+
+	// Save living costs (as total for now)
+	livingTotal := v.TravelCost + v.RentCost + v.FoodCost + v.CarCost
+	gormDb.Save(&model.Budget{
+		ItemType: model.BudgetLiving,
+		Amount:   livingTotal,
+	})
 }
 
 // SetRates sets the flight rates
