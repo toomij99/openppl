@@ -36,9 +36,10 @@ func NewChecklistView(db interface{}) *ChecklistView {
 }
 
 // Init loads the checklist items from database
-func (v *ChecklistView) Init() {
+func (v *ChecklistView) Init() tea.Cmd {
 	// Load items from database
 	// This would be: v.db.Find(&v.items)
+	return nil
 }
 
 // Update handles checklist updates

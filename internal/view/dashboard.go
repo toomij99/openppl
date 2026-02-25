@@ -5,9 +5,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
-	"ppl-study-planner/internal/model"
 	"ppl-study-planner/internal/styles"
 )
 
@@ -18,6 +16,11 @@ type DashboardView struct {
 	stats         DashboardStats
 	width         int
 	height        int
+}
+
+// Init implements tea.Model
+func (v *DashboardView) Init() tea.Cmd {
+	return nil
 }
 
 // DashboardStats holds the dashboard statistics
@@ -148,7 +151,7 @@ func (v *DashboardView) renderWeekTasks() string {
 
 		dayLabel := day
 		if date.Format("01/02") == now.Format("01/02") {
-			dayLabel = styles.Accent.Render("● " + day)
+			dayLabel = styles.Success.Render("● " + day)
 		}
 
 		result += fmt.Sprintf("  %s: %s\n", dayLabel, styles.Normal.Render(fmt.Sprintf("%d tasks", count)))

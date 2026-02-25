@@ -82,6 +82,11 @@ func NewBudgetView(db interface{}) *BudgetView {
 	}
 }
 
+// Init implements tea.Model
+func (v *BudgetView) Init() tea.Cmd {
+	return nil
+}
+
 // Update handles budget updates
 func (v *BudgetView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
