@@ -5,7 +5,9 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"gorm.io/gorm"
 
+	"ppl-study-planner/internal/model"
 	"ppl-study-planner/internal/styles"
 )
 
@@ -161,15 +163,65 @@ func (v *DashboardView) renderWeekTasks() string {
 }
 
 func (v *DashboardView) refreshStats(db interface{}) {
-	// This would query the database for real stats
-	// For now, we'll set placeholder values that would come from DB queries
-	// In a real implementation, this would use GORM to query
+	// Type assert to GORM DB
+	gormDb, ok := db.(*gorm.DB)
+	if !ok {
+		return
+	}
 
-	// Placeholder - actual DB queries would go here:
-	// db.Model(&model.DailyTask{}).Where("completed = ?", true).Count(&v.stats.Completed)
-	// db.Model(&model.DailyTask{}).Where("completed = ?", false).Count(&v.stats.Remaining)
-	// db.Model(&model.DailyTask{}).Where("date < ?", time.Now()).Where("completed = ?", false).Count(&v.stats.Overdue)
-	// db.Model(&model.DailyTask{}).Count(&v.stats.Total)
+	var completed, remaining, overdue, total int64
+
+	// Count completed tasks
+	gormDb.Model(&model.DailyTask{}).Where("completed = ?", true).Count(&completed)
+	v.stats.Completed = int(completed)
+
+	// Count remaining tasks (not completed)
+	gormDb.Model(&model.DailyTask{}).Where("completed = ?", false).Count(&remaining)
+	v.stats.Remaining = int(remaining)
+
+	// Count overdue tasks (past due date and not completed)
+	gormDb.Model(&model.DailyTask{}).
+		Where("date < ?", time.Now().Truncate(24*time.Hour)).
+		Where("completed = ?", false).
+		Count(&overdue)
+	v.stats.Overdue = int(overdue)
+
+	// Count total tasks
+	gormDb.Model(&model.DailyTask{}).Count(&total)
+	v.stats.Total = int(total)
+
+	// Calculate progress percentage
+	if v.stats.Total > 0 {
+		v.stats.Progress = float64(v.stats.Completed) / float64(v.stats.Total) * 100
+	}
+
+	// Get checkride date from StudyPlan to calculate days until
+	var studyPlan model.StudyPlan
+	if err := gormDb.First(&studyPlan).Error; err == nil && !studyPlan.CheckrideDate.IsZero() {
+		v.checkrideDate = studyPlan.CheckrideDate
+		v.stats.DaysUntil = int(time.Until(v.checkrideDate).Hours() / 24)
+	}
+
+	// Get week tasks (next 7 days from today)
+	today := time.Now().Truncate(24 * time.Hour)
+	weekEnd := today.AddDate(0, 0, 7)
+
+	var weekTasks []struct {
+		Date  time.Time
+		Count int64
+	}
+
+	gormDb.Model(&model.DailyTask{}).
+		Select("date, count(*) as count").
+		Where("date >= ? AND date < ?", today, weekEnd).
+		Group("date").
+		Scan(&weekTasks)
+
+	v.stats.WeekTasks = make(map[string]int)
+	for _, task := range weekTasks {
+		dateKey := task.Date.Format("01/02")
+		v.stats.WeekTasks[dateKey] = int(task.Count)
+	}
 }
 
 // SetCheckrideDate sets the checkride date for the dashboard
