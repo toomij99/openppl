@@ -28,6 +28,12 @@ type StudyView struct {
 	dateInput     string
 	category      string
 	status        studyStatus
+	operation     studyOperationState
+}
+
+type studyOperationState struct {
+	label   string
+	loading bool
 }
 
 type icsExportDoneMsg struct {
@@ -98,34 +104,34 @@ func (sv *StudyView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case icsExportDoneMsg:
 		if msg.err != nil {
-			sv.status = newStudyStatusFromError("ICS export", msg.err)
+			sv.finishOperation(newStudyStatusFromError("ICS export", msg.err))
 		} else {
-			sv.status = newStudyStatusSuccess(fmt.Sprintf("ICS export complete: %s (%d events)", msg.result.Path, msg.result.EventCount))
+			sv.finishOperation(newStudyStatusSuccess(fmt.Sprintf("ICS export complete: %s (%d events)", msg.result.Path, msg.result.EventCount)))
 		}
 		return sv, nil
 	case remindersExportDoneMsg:
 		if msg.err != nil {
-			sv.status = newStudyStatusFromError("Reminders export", msg.err)
+			sv.finishOperation(newStudyStatusFromError("Reminders export", msg.err))
 		} else {
-			sv.status = newStudyStatusSuccess(fmt.Sprintf("Reminders export complete: %d created in '%s'", msg.result.Created, msg.result.ListName))
+			sv.finishOperation(newStudyStatusSuccess(fmt.Sprintf("Reminders export complete: %d created in '%s'", msg.result.Created, msg.result.ListName)))
 		}
 		return sv, nil
 	case googleSyncDoneMsg:
 		if msg.err != nil {
-			sv.status = newStudyStatusFromError("Google sync", msg.err)
+			sv.finishOperation(newStudyStatusFromError("Google sync", msg.err))
 		} else {
 			if msg.result.Failed > 0 {
-				sv.status = newStudyStatusWarning(fmt.Sprintf("Google sync completed with issues: %d created, %d failed (%s)", msg.result.Created, msg.result.Failed, msg.result.CalendarID))
+				sv.finishOperation(newStudyStatusWarning(fmt.Sprintf("Google sync completed with issues: %d created, %d failed (%s)", msg.result.Created, msg.result.Failed, msg.result.CalendarID)))
 			} else {
-				sv.status = newStudyStatusSuccess(fmt.Sprintf("Google sync complete: %d created (%s)", msg.result.Created, msg.result.CalendarID))
+				sv.finishOperation(newStudyStatusSuccess(fmt.Sprintf("Google sync complete: %d created (%s)", msg.result.Created, msg.result.CalendarID)))
 			}
 		}
 		return sv, nil
 	case opencodeExportDoneMsg:
 		if msg.err != nil {
-			sv.status = newStudyStatusFromError("OpenCode export", msg.err)
+			sv.finishOperation(newStudyStatusFromError("OpenCode export", msg.err))
 		} else {
-			sv.status = newStudyStatusSuccess(fmt.Sprintf("OpenCode export complete: %d tasks -> %s", msg.result.TaskCount, msg.result.Path))
+			sv.finishOperation(newStudyStatusSuccess(fmt.Sprintf("OpenCode export complete: %d tasks -> %s", msg.result.TaskCount, msg.result.Path)))
 		}
 		return sv, nil
 	case tea.KeyMsg:
@@ -225,10 +231,17 @@ func (sv *StudyView) handleNav(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (sv *StudyView) exportICS() tea.Cmd {
+	if sv.operation.loading {
+		sv.status = newStudyStatusWarning(fmt.Sprintf("%s already in progress. Please wait for it to finish.", sv.operation.label))
+		return nil
+	}
+
 	if len(sv.tasks) == 0 {
 		sv.status = newStudyStatusWarning("ICS export skipped: no tasks available to export.")
 		return nil
 	}
+
+	sv.startOperation("ICS export", "Exporting ICS file...")
 
 	tasks := append([]model.DailyTask(nil), sv.tasks...)
 	return func() tea.Msg {
@@ -238,10 +251,17 @@ func (sv *StudyView) exportICS() tea.Cmd {
 }
 
 func (sv *StudyView) exportReminders() tea.Cmd {
+	if sv.operation.loading {
+		sv.status = newStudyStatusWarning(fmt.Sprintf("%s already in progress. Please wait for it to finish.", sv.operation.label))
+		return nil
+	}
+
 	if len(sv.tasks) == 0 {
 		sv.status = newStudyStatusWarning("Reminders export skipped: no tasks available to export.")
 		return nil
 	}
+
+	sv.startOperation("Reminders export", "Exporting Apple Reminders...")
 
 	tasks := append([]model.DailyTask(nil), sv.tasks...)
 	return func() tea.Msg {
@@ -251,10 +271,17 @@ func (sv *StudyView) exportReminders() tea.Cmd {
 }
 
 func (sv *StudyView) syncGoogleCalendar() tea.Cmd {
+	if sv.operation.loading {
+		sv.status = newStudyStatusWarning(fmt.Sprintf("%s already in progress. Please wait for it to finish.", sv.operation.label))
+		return nil
+	}
+
 	if len(sv.tasks) == 0 {
 		sv.status = newStudyStatusWarning("Google sync skipped: no tasks available to sync.")
 		return nil
 	}
+
+	sv.startOperation("Google sync", "Syncing tasks to Google Calendar...")
 
 	tasks := append([]model.DailyTask(nil), sv.tasks...)
 	return func() tea.Msg {
@@ -264,16 +291,33 @@ func (sv *StudyView) syncGoogleCalendar() tea.Cmd {
 }
 
 func (sv *StudyView) exportOpenCodeBot() tea.Cmd {
+	if sv.operation.loading {
+		sv.status = newStudyStatusWarning(fmt.Sprintf("%s already in progress. Please wait for it to finish.", sv.operation.label))
+		return nil
+	}
+
 	if len(sv.tasks) == 0 {
 		sv.status = newStudyStatusWarning("OpenCode export skipped: no tasks available to export.")
 		return nil
 	}
+
+	sv.startOperation("OpenCode export", "Exporting OpenCode bot tasks...")
 
 	tasks := append([]model.DailyTask(nil), sv.tasks...)
 	return func() tea.Msg {
 		result, err := services.ExportOpenCodeBotTasks(tasks, services.OpenCodeBotExportOptions{OutputDir: "exports/opencode-bot"})
 		return opencodeExportDoneMsg{result: result, err: err}
 	}
+}
+
+func (sv *StudyView) startOperation(label string, statusMessage string) {
+	sv.operation = studyOperationState{label: label, loading: true}
+	sv.status = newStudyStatusInfo(statusMessage)
+}
+
+func (sv *StudyView) finishOperation(status studyStatus) {
+	sv.operation = studyOperationState{}
+	sv.status = status
 }
 
 // cycleCategory cycles through category filters
@@ -382,12 +426,24 @@ func (sv *StudyView) View() string {
 	// Help
 	b.WriteString(styles.Dim.Render("\n[↑↓] Navigate  [Enter] Toggle  [/] Date  [Tab/1-5] Filter  [e] Export ICS  [r] Reminders  [g] Google Sync  [o] OpenCode"))
 
-	if sv.status.message != "" {
+	if sv.operation.loading {
+		b.WriteString("\n")
+		b.WriteString(styles.Dim.Render(fmt.Sprintf("Operation in progress: %s (repeat e/r/g/o is ignored)", sv.operation.label)))
+		b.WriteString("\n")
+		b.WriteString(styles.WarningStyle.Render(fmt.Sprintf("[%s] %s", currentLoadingMarker(), sv.status.message)))
+	}
+
+	if sv.status.message != "" && !sv.operation.loading {
 		b.WriteString("\n")
 		b.WriteString(renderStudyStatus(sv.status))
 	}
 
 	return b.String()
+}
+
+func currentLoadingMarker() string {
+	markers := []string{"-", "\\", "|", "/"}
+	return markers[(time.Now().UnixNano()/int64(250*time.Millisecond))%int64(len(markers))]
 }
 
 func renderStudyStatus(status studyStatus) string {
