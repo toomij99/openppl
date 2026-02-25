@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"ppl-study-planner/internal/tui"
+)
 
 func main() {
-	fmt.Println("PPL Study Planner TUI")
+	if err := tui.Run(); err != nil {
+		panic(err)
+	}
 }
