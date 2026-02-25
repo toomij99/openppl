@@ -9,7 +9,7 @@
 ## Phases
 
 - [x] **Phase 1: Foundation** - Core TUI app with study planning, progress tracking, budget planner, dashboard, and checkride checklist
-- [ ] **Phase 2: Calendar Export** - ICS file export and Apple Reminders integration
+- [x] **Phase 2: Calendar Export** - ICS file export and Apple Reminders integration
 - [ ] **Phase 3: Google Integration** - Google Calendar API and OpenCode bot export
 - [ ] **Phase 4: Polish** - UI refinements and edge case handling
 - [ ] **Phase 5: Multi-Rating Planners** - IFR, CPL, CFI, ATP budget planners
@@ -137,7 +137,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
-| 2. Calendar Export | 0/3 | Not started | - |
+| 2. Calendar Export | 3/3 | Complete | 2026-02-25 |
 | 3. Google Integration | 0/3 | Not started | - |
 | 4. Polish | 0/3 | Not started | - |
 | 5. Multi-Rating Planners | 0/4 | Not started | - |
@@ -174,10 +174,10 @@
 | BUDG-08 | Phase 1 | Complete |
 | BUDG-09 | Phase 1 | Complete |
 | BUDG-10 | Phase 1 | Complete |
-| ICAL-01 | Phase 2 | Pending |
-| ICAL-02 | Phase 2 | Pending |
-| ICAL-03 | Phase 2 | Pending |
-| AREM-01 | Phase 2 | Pending |
+| ICAL-01 | Phase 2 | Complete |
+| ICAL-02 | Phase 2 | Complete |
+| ICAL-03 | Phase 2 | Complete |
+| AREM-01 | Phase 2 | Complete |
 | GREM-01 | Phase 3 | Pending |
 | GREM-02 | Phase 3 | Pending |
 | RBOT-01 | Phase 3 | Pending |

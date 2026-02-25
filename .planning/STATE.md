@@ -8,10 +8,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | 02-calendar-export |
-| **Plan** | 03 |
+| **Phase** | 03-google-integration |
+| **Plan** | 01 |
 | **Total Plans** | 3 |
-| **Status** | Verification Pending |
+| **Status** | Ready |
 | **Last Completed** | 02-calendar-export-03 (Study View Export Wiring + User Feedback) |
 
 ---
@@ -77,13 +77,14 @@ Key research findings incorporated:
 
 **Last session:** 2026-02-25T12:58:34Z
 
-**Next action:** Completed 01-foundation-05-PLAN.md (Gap Closure - Critical Bug Fixes)
+**Next action:** Plan and execute 03-google-integration-01 (Google OAuth2 device flow)
 
 ---
 
 ## Decisions
 
-- (Recorded from execution)
+- Added dedicated service-layer exporters for both ICS and Apple Reminders in Phase 2.
+- Kept Phase 2 scoped to local ICS + Apple Reminders and deferred Google API integration to Phase 3.
 
 ---
 
