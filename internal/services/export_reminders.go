@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -90,6 +91,14 @@ func exportAppleRemindersWithRunner(tasks []model.DailyTask, opts RemindersExpor
 	}
 	if run == nil {
 		return RemindersExportResult{}, &RemindersExportError{Kind: "validation", Err: errors.New("nil command runner")}
+	}
+
+	artifactDir, err := ResolveArtifactOutputDir("")
+	if err != nil {
+		return RemindersExportResult{}, &RemindersExportError{Kind: "validation", Err: fmt.Errorf("resolve reminders artifact directory: %w", err)}
+	}
+	if err := os.MkdirAll(artifactDir, 0o755); err != nil {
+		return RemindersExportResult{}, &RemindersExportError{Kind: "script_failure", Err: fmt.Errorf("create reminders artifact directory: %w", err)}
 	}
 
 	listName := strings.TrimSpace(opts.ListName)

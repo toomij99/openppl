@@ -29,8 +29,7 @@ func TestICSExport_GeneratesEnvelopeAndEvents(t *testing.T) {
 		},
 	}
 
-	dir := t.TempDir()
-	result, err := ExportICS(tasks, dir)
+	result, err := ExportICS(tasks, testICSOutputDir(t))
 	if err != nil {
 		t.Fatalf("ExportICS failed: %v", err)
 	}
@@ -77,7 +76,7 @@ func TestICSExport_UsesUTCDateTimeFields(t *testing.T) {
 		},
 	}
 
-	result, err := ExportICS(tasks, t.TempDir())
+	result, err := ExportICS(tasks, testICSOutputDir(t))
 	if err != nil {
 		t.Fatalf("ExportICS failed: %v", err)
 	}
@@ -120,4 +119,18 @@ func TestICSDeterministicUID(t *testing.T) {
 	if !strings.Contains(uidA, "task-88-20260612@openppl") {
 		t.Fatalf("unexpected deterministic UID format: %q", uidA)
 	}
+}
+
+func testICSOutputDir(t *testing.T) string {
+	t.Helper()
+
+	dir := filepath.Join("icss", "test-artifacts", strings.ReplaceAll(t.Name(), "/", "-"))
+	resolvedDir, err := ResolveArtifactOutputDir(dir)
+	if err == nil {
+		t.Cleanup(func() {
+			_ = os.RemoveAll(resolvedDir)
+		})
+	}
+
+	return dir
 }

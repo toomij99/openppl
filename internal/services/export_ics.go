@@ -25,11 +25,12 @@ func ExportICS(tasks []model.DailyTask, outputDir string) (ICSExportResult, erro
 		return ICSExportResult{}, errors.New("no tasks available for ICS export")
 	}
 
-	if strings.TrimSpace(outputDir) == "" {
-		outputDir = "exports"
+	resolvedOutputDir, err := ResolveArtifactOutputDir(outputDir)
+	if err != nil {
+		return ICSExportResult{}, fmt.Errorf("resolve export directory: %w", err)
 	}
 
-	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+	if err := os.MkdirAll(resolvedOutputDir, 0o755); err != nil {
 		return ICSExportResult{}, fmt.Errorf("create export directory: %w", err)
 	}
 
@@ -62,7 +63,7 @@ func ExportICS(tasks []model.DailyTask, outputDir string) (ICSExportResult, erro
 	}
 
 	fileName := fmt.Sprintf("study-plan-%s.ics", nowUTC.Format("20060102-150405"))
-	outputPath := filepath.Join(outputDir, fileName)
+	outputPath := filepath.Join(resolvedOutputDir, fileName)
 
 	if err := os.WriteFile(outputPath, []byte(cal.Serialize()), 0o644); err != nil {
 		return ICSExportResult{}, fmt.Errorf("write ICS file: %w", err)
