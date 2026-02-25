@@ -11,8 +11,8 @@
 | **Phase** | 02-calendar-export |
 | **Plan** | 03 |
 | **Total Plans** | 3 |
-| **Status** | In Progress |
-| **Last Completed** | 02-calendar-export-02 (Apple Reminders Export Adapter) |
+| **Status** | Verification Pending |
+| **Last Completed** | 02-calendar-export-03 (Study View Export Wiring + User Feedback) |
 
 ---
 

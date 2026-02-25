@@ -64,7 +64,7 @@
 **Plans:** 3 plans
 - [x] 02-01-PLAN.md — ICS Export Service + Compatibility Tests
 - [x] 02-02-PLAN.md — Apple Reminders Export Adapter
-- [ ] 02-03-PLAN.md — Study View Export Wiring + User Feedback
+- [x] 02-03-PLAN.md — Study View Export Wiring + User Feedback
 
 ---
 
