@@ -38,11 +38,12 @@
 8. Dashboard shows budget: current spent, estimated total, remaining, % used, and projected total
 9. System warns if projected budget exceeds entered budget limit
 
-**Plans:** 4 plans
+**Plans:** 5 plans
 - 01-01-PLAN.md — Core TUI Foundation + Database Models
 - 01-02-PLAN.md — Study Planning + Progress Tracking
 - 01-03-PLAN.md — Dashboard + Checklist + Budget
 - 01-04-PLAN.md — Gap Closure - View Integration and Database Queries
+- 01-05-PLAN.md — Gap Closure - Critical Bug Fixes (Dashboard, Checklist, Budget)
 
 ---
 
@@ -135,7 +136,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 4/4 | Complete | 2026-02-25 |
+| 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Calendar Export | 0/3 | Not started | - |
 | 3. Google Integration | 0/3 | Not started | - |
 | 4. Polish | 0/3 | Not started | - |
