@@ -10,7 +10,7 @@
 
 - [x] **Phase 1: Foundation** - Core TUI app with study planning, progress tracking, budget planner, dashboard, and checkride checklist
 - [x] **Phase 2: Calendar Export** - ICS file export and Apple Reminders integration
-- [ ] **Phase 3: Google Integration** - Google Calendar API and OpenCode bot export
+- [x] **Phase 3: Google Integration** - Google Calendar API and OpenCode bot export
 - [ ] **Phase 4: Polish** - UI refinements and edge case handling
 - [ ] **Phase 5: Multi-Rating Planners** - IFR, CPL, CFI, ATP budget planners
 
@@ -138,7 +138,7 @@
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Calendar Export | 3/3 | Complete | 2026-02-25 |
-| 3. Google Integration | 1/3 | In Progress | - |
+| 3. Google Integration | 3/3 | Complete | 2026-02-25 |
 | 4. Polish | 0/3 | Not started | - |
 | 5. Multi-Rating Planners | 0/4 | Not started | - |
 

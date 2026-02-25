@@ -8,11 +8,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | 03-google-integration |
-| **Plan** | 02 |
+| **Phase** | 04-polish |
+| **Plan** | 01 |
 | **Total Plans** | 3 |
-| **Status** | In Progress |
-| **Last Completed** | 03-google-integration-01 (Google OAuth foundation + export path normalization) |
+| **Status** | Ready |
+| **Last Completed** | 03-google-integration-03 (OpenCode bot exporter + Study view Google wiring) |
 
 ---
 
@@ -78,9 +78,9 @@ Key research findings incorporated:
 
 ## Session Continuity
 
-**Last session:** 2026-02-25T14:28:41.742Z
+**Last session:** 2026-02-25T14:33:29Z
 
-**Next action:** Plan and execute 03-google-integration-02 (Google Calendar sync adapter + retry-safe event writes)
+**Next action:** Plan and execute 04-polish-01 (UI refinements and edge-case handling)
 
 ---
 
@@ -88,6 +88,8 @@ Key research findings incorporated:
 
 - Added dedicated service-layer exporters for both ICS and Apple Reminders in Phase 2.
 - Kept Phase 2 scoped to local ICS + Apple Reminders and deferred Google API integration to Phase 3.
+- Added Google Calendar sync adapter with deterministic identity mapping and bounded retry handling.
+- Added OpenCode bot `v1` exporter and Study view key actions for Google sync (`g`) and bot export (`o`).
 
 ---
 
@@ -100,9 +102,12 @@ Key research findings incorporated:
 | 01-foundation | 03 | 74min | 4 | 7 |
 | 01-foundation | 04 | 4min | 2 | 2 |
 | 01-foundation | 05 | 1min | 3 | 3 |
+| 03-google-integration | 02 | 8min | 2 | 3 |
+| 03-google-integration | 03 | 6min | 2 | 3 |
 
 ---
 
 *State managed by GSD roadmapper*
 | Phase 01-foundation Complete | 246min | 15 tasks | 23 files |
 | Phase 03-google-integration P01 | 1 min | 3 tasks | 9 files |
+| Phase 03-google-integration Complete | 35min | 7 tasks | 16 files |

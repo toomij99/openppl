@@ -42,9 +42,9 @@
 ### Reminders Integration
 
 - [ ] **AREM-01**: Create reminders in Apple Reminders via osascript
-- [ ] **GREM-01**: Create tasks in Google Calendar via API
+- [x] **GREM-01**: Create tasks in Google Calendar via API
 - [x] **GREM-02**: Google OAuth2 authentication flow
-- [ ] **RBOT-01**: Export tasks in format compatible with OpenCode bot
+- [x] **RBOT-01**: Export tasks in format compatible with OpenCode bot
 
 ### Budget Planning
 
@@ -125,9 +125,9 @@
 | ICAL-02 | Phase 2 | Complete |
 | ICAL-03 | Phase 2 | Complete |
 | AREM-01 | Phase 2 | Complete |
-| GREM-01 | Phase 3 | Pending |
+| GREM-01 | Phase 3 | Complete |
 | GREM-02 | Phase 3 | Complete |
-| RBOT-01 | Phase 3 | Pending |
+| RBOT-01 | Phase 3 | Complete |
 | BUDG-11 | Phase 5 | Pending |
 | BUDG-12 | Phase 5 | Pending |
 | BUDG-13 | Phase 5 | Pending |
