@@ -26,6 +26,17 @@ type StudyView struct {
 	inputMode     bool
 	dateInput     string
 	category      string
+	statusMessage string
+}
+
+type icsExportDoneMsg struct {
+	result services.ICSExportResult
+	err    error
+}
+
+type remindersExportDoneMsg struct {
+	result services.RemindersExportResult
+	err    error
 }
 
 // NewStudyView creates a new study view
@@ -74,6 +85,20 @@ func (sv *StudyView) Init() tea.Cmd {
 // Update implements tea.Model
 func (sv *StudyView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case icsExportDoneMsg:
+		if msg.err != nil {
+			sv.statusMessage = fmt.Sprintf("ICS export failed: %v", msg.err)
+		} else {
+			sv.statusMessage = fmt.Sprintf("ICS export complete: %s (%d events)", msg.result.Path, msg.result.EventCount)
+		}
+		return sv, nil
+	case remindersExportDoneMsg:
+		if msg.err != nil {
+			sv.statusMessage = fmt.Sprintf("Reminders export failed: %v", msg.err)
+		} else {
+			sv.statusMessage = fmt.Sprintf("Reminders export complete: %d created in '%s'", msg.result.Created, msg.result.ListName)
+		}
+		return sv, nil
 	case tea.KeyMsg:
 		if sv.inputMode {
 			return sv.handleInput(msg)
@@ -149,8 +174,38 @@ func (sv *StudyView) handleNav(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "5":
 		sv.category = "CFI Flights"
 		sv.applyFilter()
+	case "e":
+		return sv, sv.exportICS()
+	case "r":
+		return sv, sv.exportReminders()
 	}
 	return sv, nil
+}
+
+func (sv *StudyView) exportICS() tea.Cmd {
+	if len(sv.tasks) == 0 {
+		sv.statusMessage = "ICS export skipped: no tasks to export"
+		return nil
+	}
+
+	tasks := append([]model.DailyTask(nil), sv.tasks...)
+	return func() tea.Msg {
+		result, err := services.ExportICS(tasks, "exports")
+		return icsExportDoneMsg{result: result, err: err}
+	}
+}
+
+func (sv *StudyView) exportReminders() tea.Cmd {
+	if len(sv.tasks) == 0 {
+		sv.statusMessage = "Reminders export skipped: no tasks to export"
+		return nil
+	}
+
+	tasks := append([]model.DailyTask(nil), sv.tasks...)
+	return func() tea.Msg {
+		result, err := services.ExportAppleReminders(tasks, services.RemindersExportOptions{})
+		return remindersExportDoneMsg{result: result, err: err}
+	}
 }
 
 // cycleCategory cycles through category filters
