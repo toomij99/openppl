@@ -83,9 +83,9 @@
 3. User can export tasks in OpenCode bot-compatible format
 
 **Plans:** 3 plans
-- 01-01-PLAN.md — Core TUI Foundation + Database Models
-- 01-02-PLAN.md — Study Planning + Progress Tracking
-- 01-03-PLAN.md — Dashboard + Checklist + Budget
+- [x] 03-01-PLAN.md — Google OAuth foundation + export path normalization
+- [ ] 03-02-PLAN.md — Google Calendar sync adapter + retry-safe event writes
+- [ ] 03-03-PLAN.md — OpenCode bot exporter + Study view Google wiring
 
 ---
 
@@ -138,7 +138,7 @@
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Calendar Export | 3/3 | Complete | 2026-02-25 |
-| 3. Google Integration | 0/3 | Not started | - |
+| 3. Google Integration | 1/3 | In Progress | - |
 | 4. Polish | 0/3 | Not started | - |
 | 5. Multi-Rating Planners | 0/4 | Not started | - |
 
@@ -179,7 +179,7 @@
 | ICAL-03 | Phase 2 | Complete |
 | AREM-01 | Phase 2 | Complete |
 | GREM-01 | Phase 3 | Pending |
-| GREM-02 | Phase 3 | Pending |
+| GREM-02 | Phase 3 | Complete |
 | RBOT-01 | Phase 3 | Pending |
 | BUDG-11 | Phase 5 | Pending |
 | BUDG-12 | Phase 5 | Pending |

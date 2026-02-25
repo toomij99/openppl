@@ -9,10 +9,10 @@
 | Field | Value |
 |-------|-------|
 | **Phase** | 03-google-integration |
-| **Plan** | 01 |
+| **Plan** | 02 |
 | **Total Plans** | 3 |
-| **Status** | Ready |
-| **Last Completed** | 02-calendar-export-03 (Study View Export Wiring + User Feedback) |
+| **Status** | In Progress |
+| **Last Completed** | 03-google-integration-01 (Google OAuth foundation + export path normalization) |
 
 ---
 
@@ -56,6 +56,9 @@
 - **Phase structure:** Derived from requirements and research recommendations
 - **Depth setting:** Quick (3-5 phases) applied to compress into 4 natural phases
 - **Phase 1 scope:** All study planning, tracking, dashboard, and checklist features (16 reqs) - largest phase but cohesive deliverable
+- [Phase 03-google-integration]: Implemented terminal auth-code flow (browser URL + pasted code) for Google Calendar-compatible terminal OAuth.
+- [Phase 03-google-integration]: Persist Google OAuth tokens at data/google/token.json with strict 0600 file permissions and typed auth errors.
+- [Phase 03-google-integration]: Standardized exporter artifact paths through ResolveArtifactOutputDir so outputs remain under repo icss/.
 
 ### Research Context
 
@@ -75,9 +78,9 @@ Key research findings incorporated:
 
 ## Session Continuity
 
-**Last session:** 2026-02-25T12:58:34Z
+**Last session:** 2026-02-25T14:28:41.742Z
 
-**Next action:** Plan and execute 03-google-integration-01 (Google OAuth2 device flow)
+**Next action:** Plan and execute 03-google-integration-02 (Google Calendar sync adapter + retry-safe event writes)
 
 ---
 
@@ -102,3 +105,4 @@ Key research findings incorporated:
 
 *State managed by GSD roadmapper*
 | Phase 01-foundation Complete | 246min | 15 tasks | 23 files |
+| Phase 03-google-integration P01 | 1 min | 3 tasks | 9 files |
