@@ -12,9 +12,43 @@ The open source PPL study planner for terminal, web, and automation.
 
 ## Installation
 
+### macOS / Linux
+
 ```bash
 # Recommended installer
 curl -fsSL https://app.openppl.net/install | bash
+```
+
+Alternative:
+
+```bash
+# Build a local binary from source
+git clone git@github.com:toomij99/openppl.git
+cd openppl
+go build -o openppl .
+
+# Run without installing
+go run .
+```
+
+### Windows (PowerShell)
+
+Recommended: use WSL and run the macOS/Linux installer command above.
+
+Native source build:
+
+```powershell
+git clone https://github.com/toomij99/openppl.git
+cd openppl
+go build -o openppl.exe .
+.\openppl.exe help
+```
+
+### Any Platform (Go toolchain)
+
+```bash
+# Install with Go (requires Go 1.25+)
+go install ./...
 ```
 
 After install:
