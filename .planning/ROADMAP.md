@@ -103,12 +103,22 @@
 2. Loading indicators shown during long operations (ICS export, API calls)
 3. Keyboard shortcuts documented and accessible via help command
 
-**Plans:** 3 plans
+**Plans:** 4 plans
 - [x] 04-01-PLAN.md — Error handling + validation UX hardening
 - [x] 04-02-PLAN.md — Loading indicators + async operation lifecycle UX
 - [x] 04-03-PLAN.md — Global help command + centralized shortcut documentation
+- [ ] 04-04-PLAN.md — shadcn web dashboard baseline + required dark/light themes
 
 ---
+
+### Phase 04.1: Add web mode command (openppl web) + browser launch + host/port flags (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Depends on:** Phase 4
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 04.1 to break down)
 
 ### Phase 5: Multi-Rating Planners
 
@@ -139,7 +149,7 @@
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Calendar Export | 3/3 | Complete | 2026-02-25 |
 | 3. Google Integration | 3/3 | Complete | 2026-02-25 |
-| 4. Polish | 3/3 | Complete | 2026-02-25 |
+| 4. Polish | 3/4 | In progress | - |
 | 5. Multi-Rating Planners | 0/4 | Not started | - |
 
 ---
