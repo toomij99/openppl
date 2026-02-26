@@ -132,12 +132,21 @@ Plans:
 
 ### Phase 04.1: Add web mode command (openppl web) + browser launch + host/port flags (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
+**Goal:** Users can launch openppl in web mode from CLI with validated host/port options and automatic browser opening behavior
 **Depends on:** Phase 4
-**Plans:** 0 plans
+**Requirements:** WEB-01, WEB-02, WEB-03
+
+**Success Criteria** (what must be TRUE):
+
+1. Running `openppl web` starts the Go web server and attempts to open the browser to the correct URL
+2. Invalid `--hostname` and `--port` values fail fast with explicit, deterministic errors
+3. Web mode continues to respect onboarding/setup preconditions and does not regress existing CLI commands
+
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 04.1 to break down)
+- [ ] 04.1-01-PLAN.md — Web CLI command boundary + host/port validation + onboarding-safe startup tests
+- [ ] 04.1-02-PLAN.md — Browser URL normalization + web startup hardening + regression checks
 
 ### Phase 5: Multi-Rating Planners
 
@@ -210,6 +219,9 @@ Plans:
 | GREM-01 | Phase 3 | Pending |
 | GREM-02 | Phase 3 | Complete |
 | RBOT-01 | Phase 3 | Pending |
+| WEB-01 | Phase 04.1 | Pending |
+| WEB-02 | Phase 04.1 | Pending |
+| WEB-03 | Phase 04.1 | Pending |
 | OCLAW-01 | Phase 04.2 | Pending |
 | OCLAW-02 | Phase 04.2 | Pending |
 | OCLAW-03 | Phase 04.2 | Pending |
@@ -219,7 +231,7 @@ Plans:
 | BUDG-14 | Phase 5 | Pending |
 | BUDG-15 | Phase 5 | Pending |
 
-**Coverage:** 40/40 requirements mapped ✓
+**Coverage:** 43/43 requirements mapped ✓
 
 ---
 
