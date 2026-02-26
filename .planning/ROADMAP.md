@@ -142,7 +142,7 @@ Plans:
 2. Invalid `--hostname` and `--port` values fail fast with explicit, deterministic errors
 3. Web mode continues to respect onboarding/setup preconditions and does not regress existing CLI commands
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 04.1-01-PLAN.md — Web CLI command boundary + host/port validation + onboarding-safe startup tests

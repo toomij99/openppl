@@ -80,9 +80,9 @@
 
 - **GREM-03**: Two-way sync with Google Calendar
 - **NOTF-01**: Push notifications for upcoming tasks
-- [ ] **WEB-01**: CLI supports `openppl web` command to launch the web server runtime
-- [ ] **WEB-02**: `openppl web --hostname/--port` validates inputs and returns deterministic validation errors
-- [ ] **WEB-03**: Web-mode startup attempts browser open using normalized URL host mapping for wildcard binds
+- [x] **WEB-01**: CLI supports `openppl web` command to launch the web server runtime
+- [x] **WEB-02**: `openppl web --hostname/--port` validates inputs and returns deterministic validation errors
+- [x] **WEB-03**: Web-mode startup attempts browser open using normalized URL host mapping for wildcard binds
 - [x] **OCLAW-01**: OpenClaw can request current openppl status through a non-interactive machine-readable command
 - [x] **OCLAW-02**: OpenClaw can trigger allowlisted reminder actions with persistent idempotency for retried requests
 - [x] **OCLAW-03**: OpenClaw Telegram integration uses pairing-first, allowlist-safe defaults with local smoke validation artifacts
@@ -134,9 +134,9 @@
 | GREM-01 | Phase 3 | Complete |
 | GREM-02 | Phase 3 | Complete |
 | RBOT-01 | Phase 3 | Complete |
-| WEB-01 | Phase 04.1 | Pending |
-| WEB-02 | Phase 04.1 | Pending |
-| WEB-03 | Phase 04.1 | Pending |
+| WEB-01 | Phase 04.1 | Complete |
+| WEB-02 | Phase 04.1 | Complete |
+| WEB-03 | Phase 04.1 | Complete |
 | OCLAW-01 | Phase 04.2 | Complete |
 | OCLAW-02 | Phase 04.2 | Complete |
 | OCLAW-03 | Phase 04.2 | Complete |
