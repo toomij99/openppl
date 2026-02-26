@@ -1,0 +1,23 @@
+# Planning artifacts
+.planning/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Local runtime/state artifacts
+.swarm/
+.mcp.json
+*.db
+data/*.db
+internal/db/data/
+icss/.planning/
+icss/exports/
+
+# Local Claude tooling state
+.claude/
+.claude-flow/
+
+# macOS
+.DS_Store
