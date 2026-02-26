@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
@@ -13,7 +14,10 @@ export default function DashboardPage() {
               <h1 className="text-xl font-semibold tracking-tight">PPL Dashboard</h1>
               <p className="text-sm text-muted-foreground">Terminal and web progress at a glance</p>
             </div>
-            <SidebarTrigger />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <SidebarTrigger />
+            </div>
           </header>
 
           <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
