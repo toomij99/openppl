@@ -80,6 +80,9 @@
 
 - **GREM-03**: Two-way sync with Google Calendar
 - **NOTF-01**: Push notifications for upcoming tasks
+- [x] **OCLAW-01**: OpenClaw can request current openppl status through a non-interactive machine-readable command
+- [x] **OCLAW-02**: OpenClaw can trigger allowlisted reminder actions with persistent idempotency for retried requests
+- [x] **OCLAW-03**: OpenClaw Telegram integration uses pairing-first, allowlist-safe defaults with local smoke validation artifacts
 
 ## Out of Scope
 
@@ -128,6 +131,9 @@
 | GREM-01 | Phase 3 | Complete |
 | GREM-02 | Phase 3 | Complete |
 | RBOT-01 | Phase 3 | Complete |
+| OCLAW-01 | Phase 04.2 | Complete |
+| OCLAW-02 | Phase 04.2 | Complete |
+| OCLAW-03 | Phase 04.2 | Complete |
 | BUDG-11 | Phase 5 | Pending |
 | BUDG-12 | Phase 5 | Pending |
 | BUDG-13 | Phase 5 | Pending |

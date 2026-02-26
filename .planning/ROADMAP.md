@@ -111,6 +111,25 @@
 
 ---
 
+### Phase 04.2: Add support of Openclaw. As user I would like to interact with openppl with telegram: ask Openclaw to show current status, send reminder, and other actions. (INSERTED)
+
+**Goal:** Users can safely interact with openppl through OpenClaw on Telegram to fetch status and trigger reminder actions via bounded, non-interactive automation commands
+**Depends on:** Phase 4
+**Requirements:** OCLAW-01, OCLAW-02, OCLAW-03
+
+**Success Criteria** (what must be TRUE):
+
+1. OpenClaw/Telegram can call `openppl automation status` and receive deterministic machine-readable status payloads
+2. OpenClaw/Telegram can trigger a reminder action through an allowlisted automation command with persistent idempotency on retries
+3. Integration assets (skill/config/wrapper) enforce pairing-first and allowlist-safe defaults with local smoke verification before rollout
+
+**Plans:** 3/3 plans complete
+
+Plans:
+- [ ] 04.2-01-PLAN.md — Automation status contract + CLI command boundary
+- [ ] 04.2-02-PLAN.md — Allowlisted reminder action + idempotency persistence
+- [ ] 04.2-03-PLAN.md — OpenClaw/MCP skill deployment bridge + hardened config + smoke/deploy validation
+
 ### Phase 04.1: Add web mode command (openppl web) + browser launch + host/port flags (INSERTED)
 
 **Goal:** [Urgent work - to be planned]
@@ -191,13 +210,16 @@ Plans:
 | GREM-01 | Phase 3 | Pending |
 | GREM-02 | Phase 3 | Complete |
 | RBOT-01 | Phase 3 | Pending |
+| OCLAW-01 | Phase 04.2 | Pending |
+| OCLAW-02 | Phase 04.2 | Pending |
+| OCLAW-03 | Phase 04.2 | Pending |
 | BUDG-11 | Phase 5 | Pending |
 | BUDG-12 | Phase 5 | Pending |
 | BUDG-13 | Phase 5 | Pending |
 | BUDG-14 | Phase 5 | Pending |
 | BUDG-15 | Phase 5 | Pending |
 
-**Coverage:** 37/37 requirements mapped ✓
+**Coverage:** 40/40 requirements mapped ✓
 
 ---
 

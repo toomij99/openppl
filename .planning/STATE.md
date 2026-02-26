@@ -34,6 +34,7 @@
 ### Roadmap Evolution
 
 - Phase 04.1 inserted after Phase 4: Add web mode command (openppl web) + browser launch + host/port flags (URGENT)
+- Phase 04.2 inserted after Phase 4: Add support of Openclaw. As user I would like to interact with openppl with telegram: ask Openclaw to show current status, send reminder, and other actions. (URGENT)
 
 ### Decisions Made
 
