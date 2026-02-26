@@ -18,6 +18,13 @@ import (
 	"ppl-study-planner/internal/web"
 )
 
+var (
+	needsSetupCheck = needsSetup
+	runOnboardingFn = runOnboarding
+	initDatabaseFn  = db.Initialize
+	runWebServerFn  = web.Run
+)
+
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "automation" {
 		os.Exit(runAutomationCommand(os.Args[2:], os.Stdout, os.Stderr))
@@ -121,7 +128,7 @@ func run() error {
 }
 
 func needsSetup() (bool, error) {
-	database, err := db.Initialize()
+	database, err := initDatabaseFn()
 	if err != nil {
 		return false, fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -134,7 +141,7 @@ func needsSetup() (bool, error) {
 }
 
 func runOnboarding(force bool) error {
-	database, err := db.Initialize()
+	database, err := initDatabaseFn()
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -217,27 +224,27 @@ func runWeb(args []string) error {
 		return fmt.Errorf("invalid --port %s: must be 1-65535", strconv.Itoa(*port))
 	}
 
-	needs, err := needsSetup()
+	needs, err := needsSetupCheck()
 	if err != nil {
 		return err
 	}
 	if needs {
 		fmt.Println("First run detected. Starting onboarding setup...")
-		if err := runOnboarding(true); err != nil {
+		if err := runOnboardingFn(true); err != nil {
 			return err
 		}
 	}
 
-	database, err := db.Initialize()
+	database, err := initDatabaseFn()
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	return web.Run(database, *hostname, *port)
+	return runWebServerFn(database, *hostname, *port)
 }
 
 func runAutomationCommand(args []string, stdout io.Writer, stderr io.Writer) int {
-	database, err := db.Initialize()
+	database, err := initDatabaseFn()
 	if err != nil {
 		fmt.Fprintf(stderr, "failed to initialize database: %v\n", err)
 		return 1
