@@ -64,7 +64,7 @@ Each task was committed atomically:
 2. **Task 2: Implement required dark + light theme architecture and switcher** - `78f3578` (feat)
 3. **Task 3: Add dashboard data modules with loading/empty/error polish states** - `8ec14c4` (feat)
 
-**Plan metadata:** `(pending docs commit)`
+**Plan metadata:** `8544582` (docs)
 
 ## Files Created/Modified
 - `web/package.json` - Next.js workspace scripts/dependencies for dashboard stack.
