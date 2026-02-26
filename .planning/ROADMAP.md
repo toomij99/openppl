@@ -107,7 +107,7 @@
 - [x] 04-01-PLAN.md — Error handling + validation UX hardening
 - [x] 04-02-PLAN.md — Loading indicators + async operation lifecycle UX
 - [x] 04-03-PLAN.md — Global help command + centralized shortcut documentation
-- [ ] 04-04-PLAN.md — shadcn web dashboard baseline + required dark/light themes
+- [x] 04-04-PLAN.md — shadcn web dashboard baseline + required dark/light themes
 
 ---
 
@@ -149,7 +149,7 @@ Plans:
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Calendar Export | 3/3 | Complete | 2026-02-25 |
 | 3. Google Integration | 3/3 | Complete | 2026-02-25 |
-| 4. Polish | 3/4 | In progress | - |
+| 4. Polish | 4/4 | Complete | 2026-02-26 |
 | 5. Multi-Rating Planners | 0/4 | Not started | - |
 
 ---
