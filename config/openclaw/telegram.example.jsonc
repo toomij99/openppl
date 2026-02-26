@@ -1,0 +1,20 @@
+{
+  // Example Telegram channel profile for OpenClaw.
+  // Use env vars/placeholders only; do not commit real secrets.
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${OPENCLAW_TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "groups": {
+        "*": {
+          "requireMention": true
+        }
+      }
+    }
+  },
+  "policy": {
+    "allowActions": ["status", "remind"],
+    "denyUnknownActions": true
+  }
+}

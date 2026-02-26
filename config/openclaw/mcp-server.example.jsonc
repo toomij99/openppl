@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "openppl": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["scripts/openclaw/openppl-automation.sh"]
+    }
+  },
+  "policy": {
+    "allowActions": ["status", "remind"],
+    "denyUnknownActions": true
+  }
+}

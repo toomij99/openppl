@@ -62,6 +62,7 @@ const (
 	BudgetPlaneRate   BudgetItemType = "plane_rate"
 	BudgetCfiRate     BudgetItemType = "cfi_rate"
 	BudgetLiving      BudgetItemType = "living"
+	BudgetLimit       BudgetItemType = "budget_limit"
 )
 
 // Budget tracks estimated and actual costs
@@ -70,6 +71,28 @@ type Budget struct {
 	ItemType  BudgetItemType `gorm:"item_type" json:"item_type"`
 	Amount    float64        `gorm:"amount" json:"amount"`
 	CreatedAt time.Time      `json:"created_at"`
+}
+
+// AppConfig stores lightweight key-value configuration for onboarding/runtime defaults.
+type AppConfig struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Key       string    `gorm:"uniqueIndex;size:100" json:"key"`
+	Value     string    `gorm:"size:500" json:"value"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// AutomationIdempotency stores replay-safe execution records for automation actions.
+type AutomationIdempotency struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	ActionName   string    `gorm:"size:64;not null;uniqueIndex:idx_automation_dedupe" json:"action_name"`
+	RequestID    string    `gorm:"size:128;not null;uniqueIndex:idx_automation_dedupe" json:"request_id"`
+	ArgsHash     string    `gorm:"size:64;not null;uniqueIndex:idx_automation_dedupe" json:"args_hash"`
+	ActorScope   string    `gorm:"size:128;not null;uniqueIndex:idx_automation_dedupe" json:"actor_scope"`
+	ResultState  string    `gorm:"size:32;not null" json:"result_state"`
+	ResponseJSON string    `gorm:"type:text;not null" json:"response_json"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // DB wraps gorm.DB for convenience
