@@ -30,6 +30,88 @@ export OPENPPL_BIN="$(pwd)/openppl"
 - `scripts/openclaw/deploy.sh`
 - `scripts/openclaw/smoke.sh`
 
+## Quick Install Flow (Recommended)
+
+Run this sequence from the `openppl` repo root:
+
+```bash
+# 1) Validate assets and config templates
+bash scripts/openclaw/deploy.sh dry-run
+
+# 2) Verify openppl command contract
+openppl automation status
+openppl automation action --name remind --request-id setup-001 --actor-scope telegram:setup
+
+# 3) Verify wrapper contract
+bash scripts/openclaw/openppl-automation.sh status
+bash scripts/openclaw/openppl-automation.sh remind --request-id setup-002 --actor-scope telegram:setup
+
+# 4) Run smoke tests
+bash tests/openclaw/smoke_test.sh
+```
+
+If all commands pass, proceed to OpenClaw runtime config and skill registration.
+
+## One-Shot Prompt for OpenClaw
+
+Copy/paste this prompt into OpenClaw to set up openppl skill wiring end-to-end:
+
+```text
+You are configuring OpenClaw integration for openppl in this repository.
+
+Goals:
+1) Install/register a bounded openppl skill for Telegram.
+2) Allow only two actions: status and remind.
+3) Deny unknown actions by default.
+4) Keep pairing-first policy and mention requirement in groups.
+5) Validate with wrapper + smoke tests.
+
+Execution constraints:
+- Work from repository root.
+- Never expose or write real secrets to git-tracked files.
+- Do not enable arbitrary shell passthrough.
+- Do not add actions beyond status/remind.
+
+Source files to use:
+- config/openclaw/SKILL.md
+- config/openclaw/telegram.example.jsonc
+- config/openclaw/mcp-server.example.jsonc
+- scripts/openclaw/openppl-automation.sh
+- scripts/openclaw/deploy.sh
+- tests/openclaw/smoke_test.sh
+
+Required steps:
+1) Run: bash scripts/openclaw/deploy.sh dry-run
+2) Verify commands:
+   - openppl automation status
+   - openppl automation action --name remind --request-id setup-001 --actor-scope telegram:setup
+3) Verify wrapper:
+   - bash scripts/openclaw/openppl-automation.sh status
+   - bash scripts/openclaw/openppl-automation.sh remind --request-id setup-002 --actor-scope telegram:setup
+4) Apply Telegram policy defaults from config/openclaw/telegram.example.jsonc:
+   - dmPolicy=pairing
+   - groups require mention
+   - allowActions=[status,remind]
+   - denyUnknownActions=true
+5) Register skill from config/openclaw/SKILL.md with intent mapping:
+   - status -> scripts/openclaw/openppl-automation.sh status
+   - send reminder -> scripts/openclaw/openppl-automation.sh remind --request-id <request_id> --actor-scope <actor_scope>
+6) (Optional) Configure MCP route from config/openclaw/mcp-server.example.jsonc using wrapper script as command target.
+7) Run: bash tests/openclaw/smoke_test.sh
+
+Definition of done:
+- dry-run passes
+- wrapper status/remind calls pass
+- smoke test passes
+- skill is active with only status/remind intents
+- unknown action requests are denied
+
+Output format:
+- Show a short checklist with pass/fail per step.
+- Show exact commands run.
+- If any failure occurs, provide minimal fix and rerun only failed step.
+```
+
 ## 1) Validate Local Integration Assets
 
 Run the built-in dry-run check:
