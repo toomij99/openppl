@@ -89,22 +89,38 @@ func run() error {
 	args := os.Args[1:]
 
 	if len(args) > 0 {
-		switch args[0] {
+		command, remaining := resolveCommand(args)
+		switch command {
 		case "onboard":
 			return runOnboarding(false)
 		case "web":
-			return runWeb(args[1:])
-		case "--configure", "configure":
+			return runWeb(remaining)
+		case "configure":
 			return runOnboarding(true)
-		case "logs", "--logs":
+		case "logs":
 			return showLogs()
 		case "automation":
 			return fmt.Errorf("automation commands must be invoked as `openppl automation ...`")
-		case "--help", "-h", "help":
+		case "help":
 			printUsage()
 			return nil
+		case "highlights":
+			printHighlights()
+			return nil
+		case "quickstart":
+			printQuickStart()
+			return nil
+		case "examples":
+			printExamples()
+			return nil
+		case "guide":
+			printGuide()
+			return nil
 		default:
-			return fmt.Errorf("unknown command %q\n\n%s", args[0], usageText())
+			if suggestion := suggestCommand(args); suggestion != "" {
+				return fmt.Errorf("unknown command %q\nDid you mean `openppl %s`?\n\n%s", strings.Join(args, " "), suggestion, usageText())
+			}
+			return fmt.Errorf("unknown command %q\n\n%s", strings.Join(args, " "), usageText())
 		}
 	}
 
@@ -157,6 +173,145 @@ func printUsage() {
 	fmt.Print(usageText())
 }
 
+func printHighlights() {
+	fmt.Println("openppl highlights:")
+	fmt.Println("- Interactive terminal (TUI) experience for study planning")
+	fmt.Println("- Web dashboard mode")
+	fmt.Println("- Automation commands for integrations")
+	fmt.Println("- Onboarding and configuration flows")
+}
+
+func printQuickStart() {
+	fmt.Println("openppl quick start:")
+	fmt.Println("1) openppl help")
+	fmt.Println("2) openppl")
+	fmt.Println("3) openppl onboard")
+	fmt.Println("4) openppl web --hostname 0.0.0.0 --port 5016")
+	fmt.Println("5) openppl automation status")
+}
+
+func printExamples() {
+	fmt.Println("openppl command examples:")
+	fmt.Println("- openppl")
+	fmt.Println("- openppl help")
+	fmt.Println("- openppl onboard")
+	fmt.Println("- openppl --configure")
+	fmt.Println("- openppl web")
+	fmt.Println("- openppl web --hostname 0.0.0.0 --port 5016")
+	fmt.Println("- openppl automation status")
+	fmt.Println("- openppl automation action --name remind --request-id req-001")
+}
+
+func printGuide() {
+	fmt.Println("openppl guide:")
+	fmt.Println("- Start app: openppl")
+	fmt.Println("- Setup wizard: openppl onboard")
+	fmt.Println("- Reconfigure: openppl --configure")
+	fmt.Println("- Web UI: openppl web --hostname 0.0.0.0 --port 5016")
+	fmt.Println("- Automation: openppl automation status")
+	fmt.Println("- More examples: openppl examples")
+}
+
+func resolveCommand(args []string) (string, []string) {
+	if len(args) == 0 {
+		return "", nil
+	}
+
+	first := normalizeCommandToken(args[0])
+	if first == "" {
+		return "", args[1:]
+	}
+
+	if len(args) > 1 {
+		combined := normalizeCommandToken(args[0] + args[1])
+		if combined == "quickstart" {
+			return "quickstart", args[2:]
+		}
+	}
+
+	switch first {
+	case "h", "help":
+		return "help", args[1:]
+	case "logs", "log":
+		return "logs", args[1:]
+	case "configure", "config":
+		return "configure", args[1:]
+	case "web", "dashboard":
+		return "web", args[1:]
+	case "onboard", "onboarding":
+		return "onboard", args[1:]
+	case "automation", "auto":
+		return "automation", args[1:]
+	case "highlights", "highlight":
+		return "highlights", args[1:]
+	case "quickstart", "quick":
+		return "quickstart", args[1:]
+	case "examples", "example":
+		return "examples", args[1:]
+	case "guide":
+		return "guide", args[1:]
+	default:
+		return "", args[1:]
+	}
+}
+
+func suggestCommand(args []string) string {
+	if len(args) == 0 {
+		return ""
+	}
+
+	if len(args) > 1 {
+		combined := normalizeCommandToken(args[0] + args[1])
+		if combined == "quickstart" {
+			return "quickstart"
+		}
+	}
+
+	normalized := normalizeCommandToken(args[0])
+	if normalized == "" {
+		return ""
+	}
+
+	suggestions := map[string]string{
+		"high":       "highlights",
+		"highlight":  "highlights",
+		"highlights": "highlights",
+		"quick":      "quickstart",
+		"quickstart": "quickstart",
+		"start":      "guide",
+		"guide":      "guide",
+		"example":    "examples",
+		"examples":   "examples",
+		"web":        "web",
+		"dashboard":  "web",
+		"onboarding": "onboard",
+		"onboard":    "onboard",
+		"auto":       "automation",
+		"automation": "automation",
+		"config":     "configure",
+		"configure":  "configure",
+		"help":       "help",
+		"log":        "logs",
+		"logs":       "logs",
+	}
+
+	if suggestion, ok := suggestions[normalized]; ok {
+		return suggestion
+	}
+
+	return ""
+}
+
+func normalizeCommandToken(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	value = strings.TrimPrefix(value, "--")
+	value = strings.TrimPrefix(value, "-")
+	value = strings.ReplaceAll(value, "-", "")
+	value = strings.ReplaceAll(value, "_", "")
+	value = strings.ReplaceAll(value, " ", "")
+	return value
+}
+
 func showLogs() error {
 	path := filepath.Join("data", "errors.log")
 	content, err := os.ReadFile(path)
@@ -201,6 +356,10 @@ func usageText() string {
   openppl web --hostname 0.0.0.0 --port 5016
   openppl onboard       Run onboarding setup wizard
   openppl --configure   Reconfigure core planning settings
+  openppl highlights    Show product highlights in terminal
+  openppl quickstart    Show copy-paste quick start commands
+  openppl examples      Show common command examples
+  openppl guide         Show command guide by workflow
   openppl logs          Show recent error logs (last 10 entries)
   openppl help          Show this help
 `
