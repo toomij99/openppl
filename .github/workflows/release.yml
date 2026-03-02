@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build linux-${{ matrix.arch }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install arm64 cross-compiler
+        if: matrix.arch == 'arm64'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build binary
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: "1"
+        run: |
+          mkdir -p dist
+          if [ "${GOARCH}" = "arm64" ]; then
+            export CC=aarch64-linux-gnu-gcc
+          else
+            export CC=gcc
+          fi
+          go build -trimpath -o dist/openppl .
+          tar -C dist -czf "dist/openppl_${GOOS}_${GOARCH}.tar.gz" openppl
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openppl_linux_${{ matrix.arch }}
+          path: dist/openppl_linux_${{ matrix.arch }}.tar.gz
+
+  build-darwin:
+    name: Build darwin-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: macos-13
+          - arch: arm64
+            runner: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build binary
+        env:
+          GOOS: darwin
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: "1"
+          CC: clang
+        run: |
+          mkdir -p dist
+          go build -trimpath -o dist/openppl .
+          tar -C dist -czf "dist/openppl_${GOOS}_${GOARCH}.tar.gz" openppl
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openppl_darwin_${{ matrix.arch }}
+          path: dist/openppl_darwin_${{ matrix.arch }}.tar.gz
+
+  release:
+    name: Publish GitHub release assets
+    runs-on: ubuntu-24.04
+    needs: [build-linux, build-darwin]
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum openppl_*.tar.gz > checksums.txt
+
+      - name: Upload assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/openppl_*.tar.gz
+            dist/checksums.txt
