@@ -4,9 +4,14 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-linux:
@@ -52,15 +57,11 @@ jobs:
 
   build-darwin:
     name: Build darwin-${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - arch: amd64
-            runner: macos-13
-          - arch: arm64
-            runner: macos-14
+        arch: [amd64, arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,6 +79,10 @@ jobs:
           CC: clang
         run: |
           mkdir -p dist
+          if [ "${GOARCH}" = "amd64" ]; then
+            export CGO_CFLAGS="-arch x86_64"
+            export CGO_LDFLAGS="-arch x86_64"
+          fi
           go build -trimpath -o dist/openppl .
           tar -C dist -czf "dist/openppl_${GOOS}_${GOARCH}.tar.gz" openppl
 
@@ -98,14 +103,52 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Generate checksums
+      - name: Validate build outputs and generate checksums
         run: |
+          set -euo pipefail
+          ls -lah dist
+          count="$(find dist -maxdepth 1 -name 'openppl_*.tar.gz' | wc -l | tr -d ' ')"
+          if [ "$count" -ne 4 ]; then
+            echo "Expected 4 tarballs, found $count"
+            exit 1
+          fi
           cd dist
           sha256sum openppl_*.tar.gz > checksums.txt
 
+      - name: Create release if missing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists"
+          else
+            gh release create "$tag" \
+              --title "openppl $tag" \
+              --notes "Automated release for $tag"
+          fi
+
       - name: Upload assets to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/openppl_*.tar.gz
-            dist/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          gh release upload "$tag" dist/openppl_*.tar.gz dist/checksums.txt --clobber
+
+      - name: Verify release assets are downloadable
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          for file in \
+            openppl_linux_amd64.tar.gz \
+            openppl_linux_arm64.tar.gz \
+            openppl_darwin_amd64.tar.gz \
+            openppl_darwin_arm64.tar.gz \
+            checksums.txt
+          do
+            url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${file}"
+            echo "Checking ${url}"
+            curl -fsSIL "$url" >/dev/null
+          done
