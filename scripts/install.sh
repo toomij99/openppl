@@ -46,14 +46,15 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "Downloading ${ASSET_URL}"
-curl -fsSL "$ASSET_URL" -o "$TMP_DIR/openppl.tar.gz"
+ASSET_PATH="$TMP_DIR/$ASSET"
+curl -fsSL "$ASSET_URL" -o "$ASSET_PATH"
 
 if curl -fsSL "$CHECKSUMS_URL" -o "$TMP_DIR/checksums.txt"; then
   if command -v sha256sum >/dev/null 2>&1; then
-    (cd "$TMP_DIR" && sha256sum -c --ignore-missing checksums.txt)
+    (cd "$TMP_DIR" && sha256sum -c --strict --ignore-missing checksums.txt)
   elif command -v shasum >/dev/null 2>&1; then
     EXPECTED="$(grep " ${ASSET}$" "$TMP_DIR/checksums.txt" | awk '{print $1}')"
-    ACTUAL="$(shasum -a 256 "$TMP_DIR/openppl.tar.gz" | awk '{print $1}')"
+    ACTUAL="$(shasum -a 256 "$ASSET_PATH" | awk '{print $1}')"
     if [ "$EXPECTED" != "$ACTUAL" ]; then
       echo "Checksum verification failed for ${ASSET}"
       exit 1
@@ -65,7 +66,7 @@ else
   echo "Warning: checksums.txt not found, skipping checksum verification"
 fi
 
-tar -xzf "$TMP_DIR/openppl.tar.gz" -C "$TMP_DIR"
+tar -xzf "$ASSET_PATH" -C "$TMP_DIR"
 
 if [ -f "$TMP_DIR/$BIN_NAME" ]; then
   BIN_PATH="$TMP_DIR/$BIN_NAME"
@@ -74,7 +75,7 @@ elif [ -f "$TMP_DIR/$BIN_NAME/$BIN_NAME" ]; then
 else
   echo "No ${BIN_NAME} executable found in archive"
   echo "Archive contents:"
-  tar -tzf "$TMP_DIR/openppl.tar.gz" || true
+  tar -tzf "$ASSET_PATH" || true
   exit 1
 fi
 
