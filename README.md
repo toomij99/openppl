@@ -2,11 +2,21 @@
 
 The open source PPL study planner for terminal, web, and automation.
 
+Prepare smarter, fly more confidently. `openppl` helps pilot students turn checkride prep into a clear weekly plan with realistic training milestones, budget visibility, and consistent progress tracking.
+
+Built for PPL today, with a roadmap to support your full training journey: CPL, IFR, ME, CFI, and potentially ATPL.
+
 `openppl` helps you plan and track training with:
 
 - interactive TUI workflows
 - web dashboard mode
 - non-interactive automation commands for integrations (OpenClaw/Telegram)
+
+Use it to:
+
+- break down your checkride preparation into manageable study and flight tasks
+- track expected training costs and avoid budget surprises
+- keep momentum from first lesson to checkride day
 
 ---
 
@@ -33,7 +43,17 @@ go run .
 
 ### Windows (PowerShell)
 
-Recommended: use WSL and run the macOS/Linux installer command above.
+```powershell
+# Recommended installer
+powershell -NoProfile -ExecutionPolicy Bypass -Command "iwr -useb https://openppl.happycloud.ru/install.ps1 | iex"
+```
+
+Pin a version:
+
+```powershell
+$env:OPENPPL_VERSION = "v0.1.11"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "iwr -useb https://openppl.happycloud.ru/install.ps1 | iex"
+```
 
 Native source build:
 
