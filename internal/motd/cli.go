@@ -51,9 +51,20 @@ func runDisplay(stdout io.Writer) int {
 		// Silent failure — never block login.
 		return 0
 	}
-	fmt.Fprintf(stdout, "\nACS Code of the Day: %s\n", entry.Code)
-	fmt.Fprintf(stdout, "Task: %s — %s\n", entry.Title, sectionName(entry.Section))
-	fmt.Fprintf(stdout, "%s\n\n", entry.Text)
+
+	objective := strings.TrimSpace(entry.Text)
+	if objective == "" || strings.EqualFold(objective, "[Archived]") {
+		objective = "This ACS item is marked as archived in the dataset. Review current FAA ACS guidance and explain what changed from the previous standard."
+	}
+
+	fmt.Fprintf(stdout, "\n=== ACS Code of the Day ===\n")
+	fmt.Fprintf(stdout, "Code:      %s\n", entry.Code)
+	fmt.Fprintf(stdout, "Task:      %s\n", entry.Title)
+	fmt.Fprintf(stdout, "Section:   %s\n", sectionName(entry.Section))
+	fmt.Fprintf(stdout, "Category:  %s\n", entry.Category)
+	fmt.Fprintf(stdout, "Objective: %s\n", objective)
+	fmt.Fprintf(stdout, "\nStudy Tip: %s\n", studyTip(entry.Section))
+	fmt.Fprintf(stdout, "Insight:   %s\n\n", studyInsight(entry.Section, entry.Category))
 	return 0
 }
 
@@ -195,8 +206,33 @@ func sectionName(s string) string {
 	case "R":
 		return "Risk Management"
 	case "S":
-		return "Skills"
+		return "Skill"
 	default:
 		return s
+	}
+}
+
+func studyTip(section string) string {
+	switch section {
+	case "K":
+		return "Use a 60-second teach-back: define the concept, state the FAA standard, then give one practical cockpit example."
+	case "R":
+		return "Use PAVE + 3P: identify one hazard, one mitigation, and one clear go/no-go trigger you would brief before flight."
+	case "S":
+		return "Chair-fly the maneuver aloud with callouts: setup, execution cues, tolerances, and recovery gates."
+	default:
+		return "State the requirement in your own words and tie it to one real preflight or in-flight decision."
+	}
+}
+
+func studyInsight(section string, category string) string {
+	base := "Checkride answers score higher when you connect standards to decisions, not just definitions."
+	switch {
+	case section == "R" && category == "Theory":
+		return "Risk items are strongest when you verbalize a specific trigger point (weather, fuel, or workload) and your exact mitigation."
+	case section == "S":
+		return "For skill items, evaluators look for stable setup discipline first; most losses happen before the maneuver begins."
+	default:
+		return base
 	}
 }
