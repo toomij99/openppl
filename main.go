@@ -13,6 +13,7 @@ import (
 
 	"ppl-study-planner/internal/automation"
 	"ppl-study-planner/internal/db"
+	"ppl-study-planner/internal/motd"
 	"ppl-study-planner/internal/onboarding"
 	"ppl-study-planner/internal/tui"
 	"ppl-study-planner/internal/web"
@@ -95,6 +96,9 @@ func run() error {
 			return runOnboarding(false)
 		case "web":
 			return runWeb(remaining)
+		case "motd":
+			os.Exit(runMotdCommand(remaining))
+			return nil
 		case "configure":
 			return runOnboarding(true)
 		case "logs":
@@ -238,6 +242,8 @@ func resolveCommand(args []string) (string, []string) {
 		return "configure", args[1:]
 	case "web", "dashboard":
 		return "web", args[1:]
+	case "motd":
+		return "motd", args[1:]
 	case "onboard", "onboarding":
 		return "onboard", args[1:]
 	case "automation", "auto":
@@ -284,6 +290,7 @@ func suggestCommand(args []string) string {
 		"examples":   "examples",
 		"web":        "web",
 		"dashboard":  "web",
+		"motd":       "motd",
 		"onboarding": "onboard",
 		"onboard":    "onboard",
 		"auto":       "automation",
@@ -400,6 +407,13 @@ func runWeb(args []string) error {
 	}
 
 	return runWebServerFn(database, *hostname, *port)
+}
+
+func runMotdCommand(args []string) int {
+	// IMPORTANT: do NOT call initDatabaseFn() here.
+	// The display subcommand (default) is database-free and must be fast.
+	// The recall subcommand initializes its own DB via services.InitMOTDDB().
+	return motd.Execute(args, os.Stdin, os.Stdout)
 }
 
 func runAutomationCommand(args []string, stdout io.Writer, stderr io.Writer) int {
