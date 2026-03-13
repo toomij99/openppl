@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"log"
-	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,28 +19,52 @@ type MOTDEntry = acsTask
 
 // MOTDAnswer is the GORM model that records a user's daily recall answer.
 type MOTDAnswer struct {
-	ID        uint      `gorm:"primaryKey"`
-	Date      string    `gorm:"uniqueIndex;size:10"` // "2026-03-13"
-	ACSCode   string    `gorm:"size:20"`
-	Answer    string    `gorm:"type:text"`
+	ID        uint   `gorm:"primaryKey"`
+	Date      string `gorm:"uniqueIndex;size:10"` // "2026-03-13"
+	ACSCode   string `gorm:"size:20"`
+	Answer    string `gorm:"type:text"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-// DailyCodeIndex returns a deterministic index for the given date using a
-// date-seeded PCG PRNG. The same calendar day always produces the same index.
+// DailyCodeIndex returns a deterministic index for the given date.
+// The same calendar day always produces the same index.
 // Returns 0 when totalCodes <= 0.
 func DailyCodeIndex(date time.Time, totalCodes int) int {
 	if totalCodes <= 0 {
 		return 0
 	}
-	year := date.Year()
-	month := int(date.Month())
-	day := date.Day()
-	seed1 := uint64(year)*10000 + uint64(month)*100 + uint64(day)
-	seed2 := uint64(0xdeadbeef)
-	rng := rand.New(rand.NewPCG(seed1, seed2))
-	return rng.IntN(totalCodes)
+
+	dayStartUTC := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+	dayNumber := int(dayStartUTC.Unix() / 86400)
+
+	step := totalCodes - 1
+	for step > 1 && gcd(step, totalCodes) != 1 {
+		step--
+	}
+	if gcd(step, totalCodes) != 1 {
+		step = 1
+	}
+
+	idx := (dayNumber*step + 131) % totalCodes
+	if idx < 0 {
+		idx += totalCodes
+	}
+
+	return idx
+}
+
+func gcd(a, b int) int {
+	if a < 0 {
+		a = -a
+	}
+	if b < 0 {
+		b = -b
+	}
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
 }
 
 // TodaysACSCode returns the ACS task selected for the given date.
