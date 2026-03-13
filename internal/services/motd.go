@@ -1,10 +1,13 @@
 package services
 
 import (
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	gormlogger "gorm.io/gorm/logger"
@@ -13,9 +16,25 @@ import (
 	"gorm.io/gorm"
 )
 
-// MOTDEntry is a public alias for the unexported acsTask type so that packages
-// outside of services (e.g. internal/motd) can reference the returned value.
-type MOTDEntry = acsTask
+//go:embed acs_private_airplane_6c.json
+var motdDatasetJSON []byte
+
+var (
+	motdTasksOnce sync.Once
+	motdTasks     []MOTDEntry
+)
+
+// MOTDEntry contains the ACS item fields needed by login-time MOTD flow.
+type MOTDEntry struct {
+	Code     string `json:"code"`
+	Area     string `json:"area"`
+	Task     string `json:"task"`
+	Title    string `json:"task_title"`
+	Section  string `json:"section"`
+	Index    int    `json:"index"`
+	Text     string `json:"text"`
+	Category string `json:"category"`
+}
 
 // MOTDAnswer is the GORM model that records a user's daily recall answer.
 type MOTDAnswer struct {
@@ -70,12 +89,25 @@ func gcd(a, b int) int {
 // TodaysACSCode returns the ACS task selected for the given date.
 // It is deterministic: the same date always returns the same entry.
 func TodaysACSCode(now time.Time) (MOTDEntry, error) {
-	tasks := loadACSTasks()
+	tasks := loadMOTDTasks()
 	if len(tasks) == 0 {
 		return MOTDEntry{}, fmt.Errorf("ACS data is empty")
 	}
 	idx := DailyCodeIndex(now, len(tasks))
 	return tasks[idx], nil
+}
+
+func loadMOTDTasks() []MOTDEntry {
+	motdTasksOnce.Do(func() {
+		parsed := make([]MOTDEntry, 0)
+		if err := json.Unmarshal(motdDatasetJSON, &parsed); err != nil {
+			motdTasks = nil
+			return
+		}
+		motdTasks = parsed
+	})
+
+	return motdTasks
 }
 
 // InitMOTDDB opens (or creates) the per-user SQLite database used to store
