@@ -46,7 +46,7 @@ jobs:
           else
             export CC=gcc
           fi
-          go build -trimpath -o dist/openppl .
+          go build -trimpath -ldflags "-X main.appVersion=${GITHUB_REF_NAME}" -o dist/openppl .
           tar -C dist -czf "dist/openppl_${GOOS}_${GOARCH}.tar.gz" openppl
 
       - name: Upload tarball artifact
@@ -83,7 +83,7 @@ jobs:
             export CGO_CFLAGS="-arch x86_64"
             export CGO_LDFLAGS="-arch x86_64"
           fi
-          go build -trimpath -o dist/openppl .
+          go build -trimpath -ldflags "-X main.appVersion=${GITHUB_REF_NAME}" -o dist/openppl .
           tar -C dist -czf "dist/openppl_${GOOS}_${GOARCH}.tar.gz" openppl
 
       - name: Upload tarball artifact
@@ -92,10 +92,43 @@ jobs:
           name: openppl_darwin_${{ matrix.arch }}
           path: dist/openppl_darwin_${{ matrix.arch }}.tar.gz
 
+  build-windows:
+    name: Build windows-${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build binary
+        shell: pwsh
+        env:
+          GOOS: windows
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: "0"
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          go build -trimpath -ldflags "-X main.appVersion=${env:GITHUB_REF_NAME}" -o dist/openppl.exe .
+          Compress-Archive -Path dist/openppl.exe -DestinationPath "dist/openppl_${env:GOOS}_${env:GOARCH}.zip" -Force
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openppl_windows_${{ matrix.arch }}
+          path: dist/openppl_windows_${{ matrix.arch }}.zip
+
   release:
     name: Publish GitHub release assets
     runs-on: ubuntu-24.04
-    needs: [build-linux, build-darwin]
+    needs: [build-linux, build-darwin, build-windows]
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -107,13 +140,18 @@ jobs:
         run: |
           set -euo pipefail
           ls -lah dist
-          count="$(find dist -maxdepth 1 -name 'openppl_*.tar.gz' | wc -l | tr -d ' ')"
-          if [ "$count" -ne 4 ]; then
-            echo "Expected 4 tarballs, found $count"
+          tar_count="$(find dist -maxdepth 1 -name 'openppl_*.tar.gz' | wc -l | tr -d ' ')"
+          zip_count="$(find dist -maxdepth 1 -name 'openppl_*.zip' | wc -l | tr -d ' ')"
+          if [ "$tar_count" -ne 4 ]; then
+            echo "Expected 4 tarballs, found $tar_count"
+            exit 1
+          fi
+          if [ "$zip_count" -ne 2 ]; then
+            echo "Expected 2 zip files, found $zip_count"
             exit 1
           fi
           cd dist
-          sha256sum openppl_*.tar.gz > checksums.txt
+          sha256sum openppl_*.tar.gz openppl_*.zip > checksums.txt
 
       - name: Create release if missing
         env:
@@ -136,7 +174,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
-          gh release upload "$tag" -R "${GITHUB_REPOSITORY}" dist/openppl_*.tar.gz dist/checksums.txt --clobber
+          gh release upload "$tag" -R "${GITHUB_REPOSITORY}" dist/openppl_*.tar.gz dist/openppl_*.zip dist/checksums.txt --clobber
 
       - name: Verify release assets are downloadable
         run: |
@@ -147,6 +185,8 @@ jobs:
             openppl_linux_arm64.tar.gz \
             openppl_darwin_amd64.tar.gz \
             openppl_darwin_arm64.tar.gz \
+            openppl_windows_amd64.zip \
+            openppl_windows_arm64.zip \
             checksums.txt
           do
             url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${file}"

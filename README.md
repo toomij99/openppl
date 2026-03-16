@@ -29,6 +29,8 @@ Use it to:
 curl -fsSL https://openppl.happycloud.ru/install | bash
 ```
 
+The installer shows an interactive summary with ASCII logo, installed/new version, and a quick command guide before downloading.
+
 Alternative:
 
 ```bash
@@ -114,6 +116,59 @@ openppl automation status
 
 # Automation action (idempotent reminder)
 openppl automation action --name remind --request-id req-001 --actor-scope telegram:default
+
+# Show MOTD ACS daily quiz card
+openppl motd
+
+# Run today's multiple-choice quiz now
+openppl motd quiz
+
+# Show checkride readiness progress
+openppl motd progress
+
+# Show weakest ACS areas
+openppl motd weak
+```
+
+---
+
+## MOTD Daily Quiz (Ubuntu)
+
+`openppl` can show an ACS-focused quiz during Ubuntu login and track your progress toward PPL checkride readiness.
+
+Install MOTD integration (root required):
+
+```bash
+sudo openppl motd install
+```
+
+What it installs:
+
+- `/etc/update-motd.d/99-openppl-acs` for login-time daily ACS card
+- `/etc/profile.d/openppl-recall.sh` for interactive daily quiz prompt
+
+Manual commands:
+
+```bash
+# Show today's quiz card
+openppl motd
+
+# Answer today's quiz question
+openppl motd quiz
+
+# View readiness score, accuracy, and area breakdown
+openppl motd progress
+
+# View lowest-performing ACS areas first
+openppl motd weak
+```
+
+Tip: if a newer release is available, `openppl motd` shows an update recommendation with the exact installer command.
+
+Disable login quiz prompt for a shell session:
+
+```bash
+export OPENPPL_MOTD_RECALL=0
 ```
 
 ---

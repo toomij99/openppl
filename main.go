@@ -24,6 +24,7 @@ var (
 	runOnboardingFn = runOnboarding
 	initDatabaseFn  = db.Initialize
 	runWebServerFn  = web.Run
+	appVersion      = "dev"
 )
 
 func main() {
@@ -108,6 +109,9 @@ func run() error {
 		case "help":
 			printUsage()
 			return nil
+		case "version":
+			fmt.Println(versionText())
+			return nil
 		case "highlights":
 			printHighlights()
 			return nil
@@ -188,20 +192,25 @@ func printHighlights() {
 func printQuickStart() {
 	fmt.Println("openppl quick start:")
 	fmt.Println("1) openppl help")
-	fmt.Println("2) openppl")
-	fmt.Println("3) openppl onboard")
-	fmt.Println("4) openppl web --hostname 0.0.0.0 --port 5016")
-	fmt.Println("5) openppl automation status")
+	fmt.Println("2) openppl version")
+	fmt.Println("3) openppl")
+	fmt.Println("4) openppl onboard")
+	fmt.Println("5) openppl web --hostname 0.0.0.0 --port 5016")
+	fmt.Println("6) openppl automation status")
+	fmt.Println("7) openppl motd quiz")
 }
 
 func printExamples() {
 	fmt.Println("openppl command examples:")
 	fmt.Println("- openppl")
 	fmt.Println("- openppl help")
+	fmt.Println("- openppl version")
 	fmt.Println("- openppl onboard")
 	fmt.Println("- openppl --configure")
 	fmt.Println("- openppl web")
 	fmt.Println("- openppl web --hostname 0.0.0.0 --port 5016")
+	fmt.Println("- openppl motd")
+	fmt.Println("- openppl motd progress")
 	fmt.Println("- openppl automation status")
 	fmt.Println("- openppl automation action --name remind --request-id req-001")
 }
@@ -209,9 +218,11 @@ func printExamples() {
 func printGuide() {
 	fmt.Println("openppl guide:")
 	fmt.Println("- Start app: openppl")
+	fmt.Println("- Show version: openppl version")
 	fmt.Println("- Setup wizard: openppl onboard")
 	fmt.Println("- Reconfigure: openppl --configure")
 	fmt.Println("- Web UI: openppl web --hostname 0.0.0.0 --port 5016")
+	fmt.Println("- Daily quiz: openppl motd quiz")
 	fmt.Println("- Automation: openppl automation status")
 	fmt.Println("- More examples: openppl examples")
 }
@@ -244,6 +255,8 @@ func resolveCommand(args []string) (string, []string) {
 		return "web", args[1:]
 	case "motd":
 		return "motd", args[1:]
+	case "version", "ver":
+		return "version", args[1:]
 	case "onboard", "onboarding":
 		return "onboard", args[1:]
 	case "automation", "auto":
@@ -291,6 +304,8 @@ func suggestCommand(args []string) string {
 		"web":        "web",
 		"dashboard":  "web",
 		"motd":       "motd",
+		"version":    "version",
+		"ver":        "version",
 		"onboarding": "onboard",
 		"onboard":    "onboard",
 		"auto":       "automation",
@@ -359,6 +374,7 @@ func usageText() string {
   openppl automation     Run non-interactive automation commands
   openppl automation status
   openppl automation action --name remind --request-id <id>
+  openppl version       Show installed version
   openppl web           Launch web UI and open browser
   openppl web --hostname 0.0.0.0 --port 5016
   openppl onboard       Run onboarding setup wizard
@@ -370,6 +386,14 @@ func usageText() string {
   openppl logs          Show recent error logs (last 10 entries)
   openppl help          Show this help
 `
+}
+
+func versionText() string {
+	v := strings.TrimSpace(appVersion)
+	if v == "" {
+		v = "dev"
+	}
+	return fmt.Sprintf("openppl version %s", v)
 }
 
 func runWeb(args []string) error {
