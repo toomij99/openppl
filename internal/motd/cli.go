@@ -36,13 +36,15 @@ func Execute(args []string, stdin io.Reader, stdout io.Writer) int {
 		return runProgress(stdout)
 	case "weak":
 		return runWeakAreas(stdout)
+	case "config":
+		return runConfig(args[1:], stdout)
 	case "install":
 		return runInstall(stdout)
 	case "version":
 		fmt.Fprintln(stdout, "openppl motd — ACS daily quiz")
 		return 0
 	default:
-		fmt.Fprintln(stdout, "usage: openppl motd [display|recall|quiz|progress|weak|install|version]")
+		fmt.Fprintln(stdout, "usage: openppl motd [display|recall|quiz|progress|weak|config|install|version]")
 		return 1
 	}
 }
@@ -61,14 +63,24 @@ func runDisplay(stdout io.Writer) int {
 	if objective == "" || strings.EqualFold(objective, "[Archived]") {
 		objective = "This ACS item is marked as archived in the dataset. Review current FAA ACS guidance and explain what changed from the previous standard."
 	}
+	cfg := mustLoadMOTDConfig()
 
-	fmt.Fprintf(stdout, "\n=== ACS Daily Quiz Prep ===\n")
+	header := "ACS Daily Quiz Prep"
+	if !cfg.QuizMode {
+		header = "ACS Daily Review"
+	}
+	fmt.Fprintf(stdout, "\n=== %s ===\n", header)
 	fmt.Fprintf(stdout, "Code:      %s\n", entry.Code)
 	fmt.Fprintf(stdout, "Task:      %s\n", entry.Title)
 	fmt.Fprintf(stdout, "Section:   %s\n", sectionName(entry.Section))
 	fmt.Fprintf(stdout, "Category:  %s\n", entry.Category)
-	fmt.Fprintf(stdout, "Objective: %s\n", objective)
-	fmt.Fprintf(stdout, "\nStudy Tip: %s\n", studyTip(entry.Section))
+	if cfg.QuizMode {
+		fmt.Fprintf(stdout, "Objective: %s\n", objective)
+		fmt.Fprintf(stdout, "\nStudy Tip: %s\n", studyTip(entry.Section))
+	} else {
+		fmt.Fprintf(stdout, "Question:  What does ACS %s require?\n", entry.Code)
+		fmt.Fprintf(stdout, "Answer:    %s\n", objective)
+	}
 	fmt.Fprintf(stdout, "Insight:   %s\n\n", studyInsight(entry.Section, entry.Category))
 
 	current := currentVersionTag()
@@ -79,8 +91,20 @@ func runDisplay(stdout io.Writer) int {
 			}
 		}
 	}
-	fmt.Fprintf(stdout, "Run: openppl motd quiz  (or wait for login prompt)\n\n")
+	if cfg.QuizMode {
+		fmt.Fprintf(stdout, "Run: openppl motd quiz  (or wait for login prompt)\n\n")
+	} else {
+		fmt.Fprintf(stdout, "Quiz mode is off. Run: openppl motd config quiz on\n\n")
+	}
 	return 0
+}
+
+func mustLoadMOTDConfig() services.MOTDConfig {
+	cfg, err := services.LoadMOTDConfig()
+	if err != nil {
+		return services.DefaultMOTDConfig()
+	}
+	return cfg
 }
 
 func currentVersionTag() string {
@@ -192,6 +216,19 @@ func runRecall(stdin io.Reader, stdout io.Writer) int {
 	}
 
 	now := time.Now()
+	cfg := mustLoadMOTDConfig()
+	if !cfg.QuizMode {
+		entry, err := services.TodaysACSCode(now)
+		if err != nil {
+			return 0
+		}
+		fmt.Fprintf(stdout, "Daily ACS review — %s\n", entry.Code)
+		fmt.Fprintf(stdout, "Question: What does ACS %s require?\n", entry.Code)
+		fmt.Fprintf(stdout, "Answer: %s\n", objectiveText(entry))
+		fmt.Fprintf(stdout, "Insight: %s\n\n", studyInsight(entry.Section, entry.Category))
+		return 0
+	}
+
 	quiz, err := services.BuildDailyQuiz(now)
 	if err != nil {
 		// Silent failure — never block login.
@@ -236,6 +273,52 @@ func runRecall(stdin io.Reader, stdout io.Writer) int {
 		fmt.Fprintf(stdout, "Not quite. Correct answer: %s\n", quiz.CorrectLabel)
 	}
 	fmt.Fprintf(stdout, "%s\n\n", quiz.Explanation)
+	return 0
+}
+
+func runConfig(args []string, stdout io.Writer) int {
+	if len(args) == 0 {
+		cfg := mustLoadMOTDConfig()
+		mode := "off"
+		if cfg.QuizMode {
+			mode = "on"
+		}
+		fmt.Fprintf(stdout, "MOTD quiz mode: %s\n", mode)
+		fmt.Fprintln(stdout, "Usage: openppl motd config quiz [on|off]")
+		return 0
+	}
+
+	if args[0] != "quiz" {
+		fmt.Fprintln(stdout, "Usage: openppl motd config quiz [on|off]")
+		return 1
+	}
+	if len(args) < 2 {
+		fmt.Fprintln(stdout, "Usage: openppl motd config quiz [on|off]")
+		return 1
+	}
+
+	value := strings.ToLower(strings.TrimSpace(args[1]))
+	cfg := mustLoadMOTDConfig()
+	switch value {
+	case "on", "true", "1", "yes":
+		cfg.QuizMode = true
+	case "off", "false", "0", "no":
+		cfg.QuizMode = false
+	default:
+		fmt.Fprintln(stdout, "Usage: openppl motd config quiz [on|off]")
+		return 1
+	}
+
+	if err := services.SaveMOTDConfig(cfg); err != nil {
+		fmt.Fprintf(stdout, "Could not save MOTD config: %v\n", err)
+		return 1
+	}
+
+	mode := "off"
+	if cfg.QuizMode {
+		mode = "on"
+	}
+	fmt.Fprintf(stdout, "Saved. MOTD quiz mode: %s\n", mode)
 	return 0
 }
 
@@ -333,4 +416,12 @@ func studyInsight(section string, category string) string {
 	default:
 		return base
 	}
+}
+
+func objectiveText(entry services.MOTDEntry) string {
+	objective := strings.TrimSpace(entry.Text)
+	if objective == "" || strings.EqualFold(objective, "[Archived]") {
+		return "This ACS item is marked as archived in the dataset. Review current FAA ACS guidance and explain what changed from the previous standard."
+	}
+	return objective
 }

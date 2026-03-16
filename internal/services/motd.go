@@ -93,6 +93,10 @@ type MOTDReadinessStats struct {
 	TotalDistinctAreas int
 }
 
+type MOTDConfig struct {
+	QuizMode bool `json:"quiz_mode"`
+}
+
 // DailyCodeIndex returns a deterministic index for the given date.
 // The same calendar day always produces the same index.
 // Returns 0 when totalCodes <= 0.
@@ -276,17 +280,83 @@ func nonEmptyObjective(entry MOTDEntry) string {
 	return objective
 }
 
+func DefaultMOTDConfig() MOTDConfig {
+	return MOTDConfig{QuizMode: true}
+}
+
+func LoadMOTDConfig() (MOTDConfig, error) {
+	path, err := motdConfigPath()
+	if err != nil {
+		return DefaultMOTDConfig(), err
+	}
+	return loadMOTDConfigFromPath(path)
+}
+
+func SaveMOTDConfig(cfg MOTDConfig) error {
+	path, err := motdConfigPath()
+	if err != nil {
+		return err
+	}
+	return saveMOTDConfigToPath(path, cfg)
+}
+
+func motdConfigPath() (string, error) {
+	dir, err := motdDataDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "motd_config.json"), nil
+}
+
+func motdDataDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("motd: get home dir: %w", err)
+	}
+	dir := filepath.Join(home, ".openppl")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", fmt.Errorf("motd: create dir: %w", err)
+	}
+	return dir, nil
+}
+
+func loadMOTDConfigFromPath(path string) (MOTDConfig, error) {
+	cfg := DefaultMOTDConfig()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return cfg, nil
+		}
+		return cfg, fmt.Errorf("motd: read config: %w", err)
+	}
+	if len(strings.TrimSpace(string(data))) == 0 {
+		return cfg, nil
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return DefaultMOTDConfig(), fmt.Errorf("motd: parse config: %w", err)
+	}
+	return cfg, nil
+}
+
+func saveMOTDConfigToPath(path string, cfg MOTDConfig) error {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return fmt.Errorf("motd: encode config: %w", err)
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		return fmt.Errorf("motd: write config: %w", err)
+	}
+	return nil
+}
+
 // InitMOTDDB opens (or creates) the per-user SQLite database used to store
 // MOTD recall answers. It is stored at ~/.openppl/motd_answers.db so it never
 // requires root privileges or a shared data directory.
 func InitMOTDDB() (*gorm.DB, error) {
-	home, err := os.UserHomeDir()
+	dir, err := motdDataDir()
 	if err != nil {
-		return nil, fmt.Errorf("motd: get home dir: %w", err)
-	}
-	dir := filepath.Join(home, ".openppl")
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return nil, fmt.Errorf("motd: create dir: %w", err)
+		return nil, err
 	}
 	dbPath := filepath.Join(dir, "motd_answers.db")
 	silentLogger := gormlogger.New(
