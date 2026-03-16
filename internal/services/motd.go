@@ -4,9 +4,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,14 +40,57 @@ type MOTDEntry struct {
 	Category string `json:"category"`
 }
 
-// MOTDAnswer is the GORM model that records a user's daily recall answer.
+type MOTDQuizOption struct {
+	Label string
+	Text  string
+}
+
+type MOTDDailyQuiz struct {
+	Date         string
+	Entry        MOTDEntry
+	Prompt       string
+	Options      []MOTDQuizOption
+	CorrectLabel string
+	Explanation  string
+}
+
+// MOTDAnswer is the GORM model that records a user's daily quiz attempt.
 type MOTDAnswer struct {
-	ID        uint   `gorm:"primaryKey"`
-	Date      string `gorm:"uniqueIndex;size:10"` // "2026-03-13"
-	ACSCode   string `gorm:"size:20"`
-	Answer    string `gorm:"type:text"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID             uint   `gorm:"primaryKey"`
+	Date           string `gorm:"uniqueIndex;size:10"` // "2026-03-13"
+	ACSCode        string `gorm:"size:20"`
+	Prompt         string `gorm:"type:text"`
+	SelectedOption string `gorm:"size:1"`
+	CorrectOption  string `gorm:"size:1"`
+	SelectedText   string `gorm:"type:text"`
+	CorrectText    string `gorm:"type:text"`
+	Answer         string `gorm:"type:text"`
+	IsCorrect      bool
+	Skipped        bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type MOTDReadinessArea struct {
+	Area     string
+	Attempts int
+	Correct  int
+	Accuracy float64
+}
+
+type MOTDReadinessStats struct {
+	TotalAttempts      int
+	AnsweredAttempts   int
+	CorrectAttempts    int
+	SkippedAttempts    int
+	OverallAccuracy    float64
+	Last14Accuracy     float64
+	CoverageScore      float64
+	ReadinessScore     float64
+	ReadinessLabel     string
+	Areas              []MOTDReadinessArea
+	WeakAreas          []MOTDReadinessArea
+	TotalDistinctAreas int
 }
 
 // DailyCodeIndex returns a deterministic index for the given date.
@@ -97,6 +144,110 @@ func TodaysACSCode(now time.Time) (MOTDEntry, error) {
 	return tasks[idx], nil
 }
 
+func BuildDailyQuiz(now time.Time) (MOTDDailyQuiz, error) {
+	entry, err := TodaysACSCode(now)
+	if err != nil {
+		return MOTDDailyQuiz{}, err
+	}
+
+	tasks := loadMOTDTasks()
+	if len(tasks) < 4 {
+		return MOTDDailyQuiz{}, fmt.Errorf("insufficient ACS data to build quiz")
+	}
+
+	seed := quizSeed(now, entry.Code)
+	correctText := nonEmptyObjective(entry)
+
+	candidatePool := make([]MOTDEntry, 0, len(tasks))
+	for _, t := range tasks {
+		if t.Code == entry.Code {
+			continue
+		}
+		if t.Section == entry.Section {
+			candidatePool = append(candidatePool, t)
+		}
+	}
+	if len(candidatePool) < 3 {
+		candidatePool = candidatePool[:0]
+		for _, t := range tasks {
+			if t.Code != entry.Code {
+				candidatePool = append(candidatePool, t)
+			}
+		}
+	}
+
+	rng := rand.New(rand.NewSource(seed))
+	rng.Shuffle(len(candidatePool), func(i, j int) {
+		candidatePool[i], candidatePool[j] = candidatePool[j], candidatePool[i]
+	})
+
+	optionTexts := []string{correctText}
+	seen := map[string]struct{}{correctText: {}}
+	for _, candidate := range candidatePool {
+		text := nonEmptyObjective(candidate)
+		if _, ok := seen[text]; ok {
+			continue
+		}
+		seen[text] = struct{}{}
+		optionTexts = append(optionTexts, text)
+		if len(optionTexts) == 4 {
+			break
+		}
+	}
+	if len(optionTexts) < 4 {
+		return MOTDDailyQuiz{}, fmt.Errorf("insufficient unique ACS objectives for quiz options")
+	}
+
+	rng.Shuffle(len(optionTexts), func(i, j int) {
+		optionTexts[i], optionTexts[j] = optionTexts[j], optionTexts[i]
+	})
+
+	options := make([]MOTDQuizOption, 0, 4)
+	correctLabel := ""
+	for i, text := range optionTexts {
+		label := string(rune('A' + i))
+		if text == correctText {
+			correctLabel = label
+		}
+		options = append(options, MOTDQuizOption{Label: label, Text: text})
+	}
+
+	return MOTDDailyQuiz{
+		Date:         now.Format("2006-01-02"),
+		Entry:        entry,
+		Prompt:       fmt.Sprintf("Which objective best matches ACS %s?", entry.Code),
+		Options:      options,
+		CorrectLabel: correctLabel,
+		Explanation:  fmt.Sprintf("%s focuses on: %s", entry.Code, correctText),
+	}, nil
+}
+
+func NormalizeQuizChoice(input string) string {
+	trimmed := strings.TrimSpace(strings.ToUpper(input))
+	if trimmed == "" {
+		return ""
+	}
+	for _, r := range trimmed {
+		if r >= 'A' && r <= 'D' {
+			return string(r)
+		}
+	}
+	return ""
+}
+
+func IsCorrectQuizChoice(quiz MOTDDailyQuiz, choice string) bool {
+	return choice != "" && choice == quiz.CorrectLabel
+}
+
+func QuizOptionText(quiz MOTDDailyQuiz, choice string) string {
+	for _, option := range quiz.Options {
+		if option.Label == choice {
+			return option.Text
+		}
+	}
+	return ""
+}
+
 func loadMOTDTasks() []MOTDEntry {
 	motdTasksOnce.Do(func() {
 		parsed := make([]MOTDEntry, 0)
@@ -108,6 +259,21 @@ func loadMOTDTasks() []MOTDEntry {
 	})
 
 	return motdTasks
+}
+
+func quizSeed(now time.Time, code string) int64 {
+	h := fnv.New64a()
+	day := now.UTC().Format("2006-01-02")
+	_, _ = h.Write([]byte(day + ":" + code))
+	return int64(h.Sum64())
+}
+
+func nonEmptyObjective(entry MOTDEntry) string {
+	objective := strings.TrimSpace(entry.Text)
+	if objective == "" || strings.EqualFold(objective, "[Archived]") {
+		return "This ACS item is archived. Review current FAA ACS guidance and explain what changed from the previous standard."
+	}
+	return objective
 }
 
 // InitMOTDDB opens (or creates) the per-user SQLite database used to store
@@ -139,25 +305,201 @@ func InitMOTDDB() (*gorm.DB, error) {
 	return db, nil
 }
 
-// SaveMOTDAnswer upserts a recall answer for today's date. If an answer for
-// today already exists it is overwritten; otherwise a new record is created.
-func SaveMOTDAnswer(db *gorm.DB, code string, answer string) error {
-	date := time.Now().Format("2006-01-02")
+// SaveMOTDAttempt upserts a quiz attempt for the given date.
+func SaveMOTDAttempt(db *gorm.DB, date string, quiz MOTDDailyQuiz, selected string, skipped bool) error {
+	if strings.TrimSpace(date) == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+	selectedText := QuizOptionText(quiz, selected)
+	correctText := QuizOptionText(quiz, quiz.CorrectLabel)
+	isCorrect := !skipped && IsCorrectQuizChoice(quiz, selected)
+	legacyAnswer := selected
+	if skipped {
+		legacyAnswer = ""
+	}
+
 	var record MOTDAnswer
 	result := db.Where(MOTDAnswer{Date: date}).
-		Assign(MOTDAnswer{ACSCode: code, Answer: answer}).
+		Assign(MOTDAnswer{
+			ACSCode:        quiz.Entry.Code,
+			Prompt:         quiz.Prompt,
+			SelectedOption: selected,
+			CorrectOption:  quiz.CorrectLabel,
+			SelectedText:   selectedText,
+			CorrectText:    correctText,
+			Answer:         legacyAnswer,
+			IsCorrect:      isCorrect,
+			Skipped:        skipped,
+		}).
 		FirstOrCreate(&record)
 	if result.Error != nil {
-		return fmt.Errorf("motd: save answer: %w", result.Error)
+		return fmt.Errorf("motd: save attempt: %w", result.Error)
 	}
-	// If the record already existed, FirstOrCreate won't apply Assign fields —
-	// update it explicitly.
+	// If the record already existed, FirstOrCreate won't apply Assign fields.
 	if result.RowsAffected == 0 {
-		record.ACSCode = code
-		record.Answer = answer
+		record.ACSCode = quiz.Entry.Code
+		record.Prompt = quiz.Prompt
+		record.SelectedOption = selected
+		record.CorrectOption = quiz.CorrectLabel
+		record.SelectedText = selectedText
+		record.CorrectText = correctText
+		record.Answer = legacyAnswer
+		record.IsCorrect = isCorrect
+		record.Skipped = skipped
 		if err := db.Save(&record).Error; err != nil {
-			return fmt.Errorf("motd: update answer: %w", err)
+			return fmt.Errorf("motd: update attempt: %w", err)
 		}
 	}
 	return nil
+}
+
+func LoadMOTDAttempts(db *gorm.DB) ([]MOTDAnswer, error) {
+	attempts := make([]MOTDAnswer, 0)
+	if err := db.Order("date asc").Find(&attempts).Error; err != nil {
+		return nil, fmt.Errorf("motd: load attempts: %w", err)
+	}
+	return attempts, nil
+}
+
+func ComputeMOTDReadiness(attempts []MOTDAnswer, now time.Time) MOTDReadinessStats {
+	stats := MOTDReadinessStats{}
+	stats.TotalAttempts = len(attempts)
+
+	if len(attempts) == 0 {
+		stats.ReadinessLabel = "Needs work"
+		stats.TotalDistinctAreas = countDistinctAreas(loadMOTDTasks())
+		return stats
+	}
+
+	byArea := map[string]*MOTDReadinessArea{}
+	areaByCode := mapCodeToArea(loadMOTDTasks())
+	cutoff14 := now.AddDate(0, 0, -14)
+	correctRecentAreas := map[string]struct{}{}
+	answered14 := 0
+	correct14 := 0
+
+	for _, attempt := range attempts {
+		if attempt.Skipped {
+			stats.SkippedAttempts++
+		} else {
+			stats.AnsweredAttempts++
+			if attempt.IsCorrect {
+				stats.CorrectAttempts++
+			}
+		}
+
+		area := areaByCode[attempt.ACSCode]
+		if area == "" {
+			area = "unknown"
+		}
+		if _, ok := byArea[area]; !ok {
+			byArea[area] = &MOTDReadinessArea{Area: area}
+		}
+		if !attempt.Skipped {
+			byArea[area].Attempts++
+			if attempt.IsCorrect {
+				byArea[area].Correct++
+			}
+		}
+
+		attemptDate, err := time.Parse("2006-01-02", attempt.Date)
+		if err != nil {
+			continue
+		}
+		if attemptDate.Before(cutoff14) {
+			continue
+		}
+		if attempt.Skipped {
+			continue
+		}
+		answered14++
+		if attempt.IsCorrect {
+			correct14++
+			correctRecentAreas[area] = struct{}{}
+		}
+	}
+
+	if stats.AnsweredAttempts > 0 {
+		stats.OverallAccuracy = percent(stats.CorrectAttempts, stats.AnsweredAttempts)
+	}
+	if answered14 > 0 {
+		stats.Last14Accuracy = percent(correct14, answered14)
+	}
+
+	totalAreas := countDistinctAreas(loadMOTDTasks())
+	stats.TotalDistinctAreas = totalAreas
+	if totalAreas > 0 {
+		stats.CoverageScore = 100.0 * float64(len(correctRecentAreas)) / float64(totalAreas)
+	}
+
+	stats.ReadinessScore = 0.5*stats.OverallAccuracy + 0.3*stats.Last14Accuracy + 0.2*stats.CoverageScore
+	switch {
+	case stats.ReadinessScore >= 80:
+		stats.ReadinessLabel = "Checkride-ready trend"
+	case stats.ReadinessScore >= 60:
+		stats.ReadinessLabel = "Building consistency"
+	default:
+		stats.ReadinessLabel = "Needs work"
+	}
+
+	areas := make([]MOTDReadinessArea, 0, len(byArea))
+	for _, area := range byArea {
+		if area.Attempts > 0 {
+			area.Accuracy = percent(area.Correct, area.Attempts)
+		}
+		areas = append(areas, *area)
+	}
+	sort.Slice(areas, func(i, j int) bool {
+		if areas[i].Area == areas[j].Area {
+			return areas[i].Attempts > areas[j].Attempts
+		}
+		return areas[i].Area < areas[j].Area
+	})
+	stats.Areas = areas
+
+	weak := make([]MOTDReadinessArea, 0, len(areas))
+	for _, area := range areas {
+		if area.Attempts == 0 {
+			continue
+		}
+		weak = append(weak, area)
+	}
+	sort.Slice(weak, func(i, j int) bool {
+		if weak[i].Accuracy == weak[j].Accuracy {
+			return weak[i].Attempts > weak[j].Attempts
+		}
+		return weak[i].Accuracy < weak[j].Accuracy
+	})
+	if len(weak) > 5 {
+		weak = weak[:5]
+	}
+	stats.WeakAreas = weak
+
+	return stats
+}
+
+func mapCodeToArea(entries []MOTDEntry) map[string]string {
+	codeToArea := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		codeToArea[entry.Code] = entry.Area
+	}
+	return codeToArea
+}
+
+func countDistinctAreas(entries []MOTDEntry) int {
+	areas := map[string]struct{}{}
+	for _, entry := range entries {
+		if strings.TrimSpace(entry.Area) == "" {
+			continue
+		}
+		areas[entry.Area] = struct{}{}
+	}
+	return len(areas)
+}
+
+func percent(part int, total int) float64 {
+	if total == 0 {
+		return 0
+	}
+	return 100.0 * float64(part) / float64(total)
 }

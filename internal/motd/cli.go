@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -29,15 +30,19 @@ func Execute(args []string, stdin io.Reader, stdout io.Writer) int {
 	switch sub {
 	case "", "display":
 		return runDisplay(stdout)
-	case "recall":
+	case "recall", "quiz":
 		return runRecall(stdin, stdout)
+	case "progress":
+		return runProgress(stdout)
+	case "weak":
+		return runWeakAreas(stdout)
 	case "install":
 		return runInstall(stdout)
 	case "version":
-		fmt.Fprintln(stdout, "openppl motd — ACS Code of the Day")
+		fmt.Fprintln(stdout, "openppl motd — ACS daily quiz")
 		return 0
 	default:
-		fmt.Fprintln(stdout, "usage: openppl motd [display|recall|install|version]")
+		fmt.Fprintln(stdout, "usage: openppl motd [display|recall|quiz|progress|weak|install|version]")
 		return 1
 	}
 }
@@ -57,7 +62,7 @@ func runDisplay(stdout io.Writer) int {
 		objective = "This ACS item is marked as archived in the dataset. Review current FAA ACS guidance and explain what changed from the previous standard."
 	}
 
-	fmt.Fprintf(stdout, "\n=== ACS Code of the Day ===\n")
+	fmt.Fprintf(stdout, "\n=== ACS Daily Quiz Prep ===\n")
 	fmt.Fprintf(stdout, "Code:      %s\n", entry.Code)
 	fmt.Fprintf(stdout, "Task:      %s\n", entry.Title)
 	fmt.Fprintf(stdout, "Section:   %s\n", sectionName(entry.Section))
@@ -65,7 +70,29 @@ func runDisplay(stdout io.Writer) int {
 	fmt.Fprintf(stdout, "Objective: %s\n", objective)
 	fmt.Fprintf(stdout, "\nStudy Tip: %s\n", studyTip(entry.Section))
 	fmt.Fprintf(stdout, "Insight:   %s\n\n", studyInsight(entry.Section, entry.Category))
+
+	current := currentVersionTag()
+	if current != "" {
+		if latest, err := services.FetchLatestReleaseTag(600 * time.Millisecond); err == nil {
+			if msg, ok := services.BuildUpdateRecommendation(current, latest); ok {
+				fmt.Fprintf(stdout, "%s\n", msg)
+			}
+		}
+	}
+	fmt.Fprintf(stdout, "Run: openppl motd quiz  (or wait for login prompt)\n\n")
 	return 0
+}
+
+func currentVersionTag() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	v := strings.TrimSpace(info.Main.Version)
+	if v == "" || v == "(devel)" {
+		return ""
+	}
+	return v
 }
 
 // runInstall writes the two system integration files that make login-time MOTD
@@ -154,8 +181,8 @@ func checkSSHDConfig(stdout io.Writer) {
 	}
 }
 
-// runRecall prompts the user to describe today's ACS requirement and saves
-// their answer to the per-user motd_answers.db. If stdin is not a terminal
+// runRecall prompts the user with today's multiple-choice ACS quiz and stores
+// the result in the per-user motd_answers.db. If stdin is not a terminal
 // (e.g. SCP, rsync, piped), it returns 0 silently. Never blocks login.
 func runRecall(stdin io.Reader, stdout io.Writer) int {
 	// Only run in interactive terminals — skip SCP/rsync/piped sessions.
@@ -164,24 +191,27 @@ func runRecall(stdin io.Reader, stdout io.Writer) int {
 		return 0
 	}
 
-	entry, err := services.TodaysACSCode(time.Now())
+	now := time.Now()
+	quiz, err := services.BuildDailyQuiz(now)
 	if err != nil {
 		// Silent failure — never block login.
 		return 0
 	}
 
-	fmt.Fprintf(stdout, "Recall check — ACS %s: %s\n", entry.Code, entry.Text)
-	fmt.Fprint(stdout, "Describe this requirement (Enter to skip): ")
+	fmt.Fprintf(stdout, "Daily checkride quiz — ACS %s\n", quiz.Entry.Code)
+	fmt.Fprintln(stdout, quiz.Prompt)
+	for _, option := range quiz.Options {
+		fmt.Fprintf(stdout, "  %s) %s\n", option.Label, option.Text)
+	}
+	fmt.Fprint(stdout, "Choose A/B/C/D (Enter to skip): ")
 
 	line, err := bufio.NewReader(stdin).ReadString('\n')
 	if err != nil {
 		// EOF or read error — treat as skip.
 		return 0
 	}
-	answer := strings.TrimSpace(line)
-	if answer == "" {
-		return 0
-	}
+	choice := services.NormalizeQuizChoice(line)
+	skipped := strings.TrimSpace(line) == "" || choice == ""
 
 	db, err := services.InitMOTDDB()
 	if err != nil {
@@ -189,12 +219,80 @@ func runRecall(stdin io.Reader, stdout io.Writer) int {
 		return 0
 	}
 
-	if err := services.SaveMOTDAnswer(db, entry.Code, answer); err != nil {
+	if err := services.SaveMOTDAttempt(db, now.Format("2006-01-02"), quiz, choice, skipped); err != nil {
 		// Silent failure — never block login.
 		return 0
 	}
 
-	fmt.Fprint(stdout, "Answer saved.\n\n")
+	if skipped {
+		fmt.Fprintf(stdout, "Skipped. Correct answer: %s\n", quiz.CorrectLabel)
+		fmt.Fprintf(stdout, "%s\n\n", quiz.Explanation)
+		return 0
+	}
+
+	if services.IsCorrectQuizChoice(quiz, choice) {
+		fmt.Fprintln(stdout, "Correct.")
+	} else {
+		fmt.Fprintf(stdout, "Not quite. Correct answer: %s\n", quiz.CorrectLabel)
+	}
+	fmt.Fprintf(stdout, "%s\n\n", quiz.Explanation)
+	return 0
+}
+
+func runProgress(stdout io.Writer) int {
+	db, err := services.InitMOTDDB()
+	if err != nil {
+		fmt.Fprintf(stdout, "Could not open MOTD progress DB: %v\n", err)
+		return 1
+	}
+
+	attempts, err := services.LoadMOTDAttempts(db)
+	if err != nil {
+		fmt.Fprintf(stdout, "Could not load MOTD attempts: %v\n", err)
+		return 1
+	}
+
+	stats := services.ComputeMOTDReadiness(attempts, time.Now())
+	fmt.Fprintln(stdout, "MOTD Readiness")
+	fmt.Fprintf(stdout, "Score: %.1f/100 (%s)\n", stats.ReadinessScore, stats.ReadinessLabel)
+	fmt.Fprintf(stdout, "Overall accuracy: %.1f%% (%d/%d)\n", stats.OverallAccuracy, stats.CorrectAttempts, stats.AnsweredAttempts)
+	fmt.Fprintf(stdout, "Last 14 days: %.1f%%\n", stats.Last14Accuracy)
+	fmt.Fprintf(stdout, "Coverage: %.1f%% (%d ACS areas tracked)\n", stats.CoverageScore, stats.TotalDistinctAreas)
+	fmt.Fprintf(stdout, "Attempts: %d answered, %d skipped\n", stats.AnsweredAttempts, stats.SkippedAttempts)
+
+	if len(stats.Areas) > 0 {
+		fmt.Fprintln(stdout, "\nBy area:")
+		for _, area := range stats.Areas {
+			fmt.Fprintf(stdout, "  Area %s: %.1f%% (%d/%d)\n", area.Area, area.Accuracy, area.Correct, area.Attempts)
+		}
+	}
+
+	return 0
+}
+
+func runWeakAreas(stdout io.Writer) int {
+	db, err := services.InitMOTDDB()
+	if err != nil {
+		fmt.Fprintf(stdout, "Could not open MOTD progress DB: %v\n", err)
+		return 1
+	}
+
+	attempts, err := services.LoadMOTDAttempts(db)
+	if err != nil {
+		fmt.Fprintf(stdout, "Could not load MOTD attempts: %v\n", err)
+		return 1
+	}
+
+	stats := services.ComputeMOTDReadiness(attempts, time.Now())
+	if len(stats.WeakAreas) == 0 {
+		fmt.Fprintln(stdout, "No answered quiz data yet. Run: openppl motd quiz")
+		return 0
+	}
+
+	fmt.Fprintln(stdout, "Weak ACS areas (lowest accuracy first):")
+	for _, area := range stats.WeakAreas {
+		fmt.Fprintf(stdout, "  Area %s: %.1f%% (%d/%d)\n", area.Area, area.Accuracy, area.Correct, area.Attempts)
+	}
 	return 0
 }
 

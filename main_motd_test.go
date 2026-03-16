@@ -10,7 +10,7 @@ import (
 )
 
 // TestMotdCommand_DisplayNoDB verifies that the motd display subcommand exits 0,
-// prints the "ACS Code of the Day" header, and includes a recognizable ACS code
+// prints the "ACS Daily Quiz Prep" header, and includes a recognizable ACS code
 // pattern — without requiring the main app database to be initialized.
 func TestMotdCommand_DisplayNoDB(t *testing.T) {
 	var buf bytes.Buffer
@@ -22,8 +22,8 @@ func TestMotdCommand_DisplayNoDB(t *testing.T) {
 	}
 
 	out := buf.String()
-	if !regexp.MustCompile(`ACS Code of the Day`).MatchString(out) {
-		t.Errorf("output missing 'ACS Code of the Day'; got:\n%s", out)
+	if !regexp.MustCompile(`ACS Daily Quiz Prep`).MatchString(out) {
+		t.Errorf("output missing 'ACS Daily Quiz Prep'; got:\n%s", out)
 	}
 
 	// ACS code pattern: two uppercase letters, Roman numeral section,
